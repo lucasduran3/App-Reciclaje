@@ -1,82 +1,60 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import fs from 'fs/promises'
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import fileService from './services/fileService.js';
+import routes from './routes/index.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { requestLogger } from './middleware/logger.js';
 
-dotenv.config()
+dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const app = express()
-const PORT = process.env.PORT || 3000
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(requestLogger);
 
-// Logger middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`)
-  next()
-})
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV 
-  })
-})
-
-// Get all data
-app.get('/api/data', async (req, res) => {
+// Inicializar FileService antes de levantar servidor
+async function initializeServer() {
   try {
-    const dataPath = join(__dirname, process.env.DATA_FILE)
-    const mockPath = join(__dirname, process.env.MOCK_FILE)
-    
-    try {
-      const data = await fs.readFile(dataPath, 'utf-8')
-      res.json(JSON.parse(data))
-    } catch (error) {
-      // Si no existe data.json, copiar desde mock_data.json
-      const mockData = await fs.readFile(mockPath, 'utf-8')
-      await fs.writeFile(dataPath, mockData)
-      res.json(JSON.parse(mockData))
-    }
+    // Inicializar sistema de archivos
+    await fileService.initialize();
+
+    // Montar rutas
+    app.use('/api', routes);
+
+    // Manejadores de errores (deben ir al final)
+    app.use(notFoundHandler);
+    app.use(errorHandler);
+
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log('\n🚀 ================================');
+      console.log(`   Eco-Game Server Running`);
+      console.log('   ================================');
+      console.log(`   🌐 URL: http://localhost:${PORT}`);
+      console.log(`   📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`   📂 Data file: ${fileService.dataPath}`);
+      console.log('   ================================\n');
+    });
   } catch (error) {
-    console.error('Error reading data:', error)
-    res.status(500).json({ error: 'Error loading data' })
+    console.error('❌ Failed to initialize server:', error);
+    process.exit(1);
   }
-})
+}
 
-// Save all data
-app.post('/api/data', async (req, res) => {
-  try {
-    const dataPath = join(__dirname, process.env.DATA_FILE)
-    await fs.writeFile(dataPath, JSON.stringify(req.body, null, 2))
-    res.json({ success: true, message: 'Data saved successfully' })
-  } catch (error) {
-    console.error('Error saving data:', error)
-    res.status(500).json({ error: 'Error saving data' })
-  }
-})
+// Manejo de cierre graceful
+process.on('SIGTERM', () => {
+  console.log('\n👋 SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' })
-})
+process.on('SIGINT', () => {
+  console.log('\n👋 SIGINT received, shutting down gracefully...');
+  process.exit(0);
+});
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({ error: 'Internal server error' })
-})
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-  console.log(`📊 Environment: ${process.env.NODE_ENV}`)
-})
+// Iniciar servidor
+initializeServer();

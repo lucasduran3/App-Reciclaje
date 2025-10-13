@@ -12,6 +12,7 @@
     "server": "cd server && npm run dev",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "clean": "rm -rf node_modules client/node_modules server/node_modules",
+    "reset-data": "node ../scripts/reset-data.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
