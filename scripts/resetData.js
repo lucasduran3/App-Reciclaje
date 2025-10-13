@@ -1,6 +1,5 @@
 /**
  * Script para reiniciar datos a estado inicial
- * 
  * Uso: node scripts/reset-data.js
  */
 

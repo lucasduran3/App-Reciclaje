@@ -5,6 +5,8 @@
  * Se actualizan automáticamente (diarias a las 3am, semanales los lunes).
  */
 
+import { CleaningStatus, MissionCategory, MissionType, TicketStatus, TicketType } from "../constants/enums";
+
 export interface Mission {
   // Identificación
   id: string;                      // UUID único de la misión
@@ -63,8 +65,8 @@ export const DAILY_MISSION_TEMPLATES: Omit<Mission, 'id' | 'progress' | 'complet
     title: 'Reportar un punto sucio',
     description: 'Encuentra y reporta un lugar que necesite limpieza en tu zona',
     icon: '📍',
-    type: 'daily',
-    category: 'reporter',
+    type: MissionType.DAILY,
+    category: MissionCategory.REPORTER,
     points: 50,
     goal: 1,
     requirements: { minPhotos: 1, mustHaveLocation: true },
@@ -73,8 +75,8 @@ export const DAILY_MISSION_TEMPLATES: Omit<Mission, 'id' | 'progress' | 'complet
     title: 'Acepta un reto de limpieza',
     description: 'Acepta al menos un ticket reportado por otro usuario',
     icon: '✋',
-    type: 'daily',
-    category: 'cleaner',
+    type: MissionType.DAILY,
+    category: MissionCategory.CLEANER,
     points: 30,
     goal: 1,
     requirements: { mustBeOthersTicket: true },
@@ -83,11 +85,11 @@ export const DAILY_MISSION_TEMPLATES: Omit<Mission, 'id' | 'progress' | 'complet
     title: 'Valida una limpieza',
     description: 'Valida un ticket que hayas reportado y fue limpiado',
     icon: '✅',
-    type: 'daily',
-    category: 'validator',
+    type: MissionType.DAILY,
+    category: MissionCategory.VALIDATOR,
     points: 40,
     goal: 1,
-    requirements: { mustBeOwnTicket: true, ticketStatus: 'validating' },
+    requirements: { mustBeOwnTicket: true, ticketStatus: TicketStatus.VALIDATING },
   },
 ];
 
@@ -96,18 +98,18 @@ export const WEEKLY_MISSION_TEMPLATES: Omit<Mission, 'id' | 'progress' | 'comple
     title: 'Limpiador Semanal',
     description: 'Completa la limpieza de 5 tickets esta semana',
     icon: '🧹',
-    type: 'weekly',
-    category: 'cleaner',
+    type: MissionType.WEEKLY,
+    category: MissionCategory.CLEANER,
     points: 300,
     goal: 5,
-    requirements: { cleaningStatus: 'complete' },
+    requirements: { cleaningStatus: CleaningStatus.COMPLETE},
   },
   {
     title: 'Explorador Urbano',
     description: 'Reporta 10 puntos sucios en diferentes zonas',
     icon: '🔍',
-    type: 'weekly',
-    category: 'reporter',
+    type: MissionType.WEEKLY,
+    category: MissionCategory.REPORTER,
     points: 250,
     goal: 10,
     requirements: { uniqueZones: 3 },
@@ -116,8 +118,8 @@ export const WEEKLY_MISSION_TEMPLATES: Omit<Mission, 'id' | 'progress' | 'comple
     title: 'Comunidad Activa',
     description: 'Da 20 likes y comenta en 5 tickets de otros usuarios',
     icon: '💬',
-    type: 'weekly',
-    category: 'social',
+    type: MissionType.WEEKLY,
+    category: MissionCategory.SOCIAL,
     points: 100,
     goal: 25,
     requirements: { likes: 20, comments: 5 },
