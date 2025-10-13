@@ -1,0 +1,71 @@
+{
+  "users": [
+    {
+      "id": "user-1",
+      "name": "Usuario Demo",
+      "email": "demo@ecogame.com",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
+      "points": 1250,
+      "level": 5,
+      "streak": 7,
+      "zone": "Centro",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "ticket-1",
+      "title": "Basura en Plaza Central",
+      "description": "Acumulación de residuos en la plaza principal",
+      "location": {
+        "lat": -31.2535,
+        "lng": -61.4978,
+        "address": "Plaza 25 de Mayo, Rafaela"
+      },
+      "zone": "Centro",
+      "status": "reported",
+      "type": "general",
+      "priority": "medium",
+      "reportedBy": "user-1",
+      "photos": [],
+      "createdAt": "2025-10-13T10:00:00.000Z"
+    }
+  ],
+  "missions": [
+    {
+      "id": "mission-daily-1",
+      "title": "Reportar un punto sucio",
+      "description": "Encuentra y reporta un lugar que necesite limpieza",
+      "type": "daily",
+      "points": 50,
+      "goal": 1,
+      "progress": 0,
+      "completed": false,
+      "expiresAt": "2025-10-14T03:00:00.000Z"
+    },
+    {
+      "id": "mission-weekly-1",
+      "title": "Limpiar 5 lugares",
+      "description": "Acepta y completa la limpieza de 5 tickets esta semana",
+      "type": "weekly",
+      "points": 300,
+      "goal": 5,
+      "progress": 0,
+      "completed": false,
+      "expiresAt": "2025-10-20T03:00:00.000Z"
+    }
+  ],
+  "leaderboard": [
+    {
+      "userId": "user-1",
+      "name": "Usuario Demo",
+      "points": 1250,
+      "zone": "Centro",
+      "position": 1
+    }
+  ],
+  "metadata": {
+    "lastUpdated": "2025-10-13T10:00:00.000Z",
+    "version": "1.0.0"
+  }
+}
