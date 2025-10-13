@@ -1,0 +1,35 @@
+{
+  "name": "app-reciclaje",
+  "version": "1.0.0",
+  "description": "App gamificada de reciclaje y limpieza urbana",
+  "private": true,
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucasduran3/App-Reciclaje.git"
+  },
+  "keywords": [
+    "reciclaje",
+    "gamificacion",
+    "urbano"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lucasduran3/App-Reciclaje/issues"
+  },
+  "homepage": "https://github.com/lucasduran3/App-Reciclaje#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
