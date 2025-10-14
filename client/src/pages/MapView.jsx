@@ -1,122 +1,163 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTickets } from '../hooks/useTickets';
+import { useApp } from '../context/AppContext';
+import TicketFilters from '../components/tickets/TicketFilters';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
+import Loader from '../components/common/Loader';
 
 export default function MapView() {
-  const [selectedZone, setSelectedZone] = useState(null);
-  const { tickets, loading } = useTickets({ 
-    zone: selectedZone,
-    status: 'reported'
+  const navigate = useNavigate();
+  const { appData } = useApp();
+  const [filters, setFilters] = useState({});
+  const { tickets, loading, refreshTickets } = useTickets(filters);
+
+const handleFilterChange = (key, value) => {
+  setFilters(prev => {
+    const next = { ...prev };
+
+    // Si el valor es null/undefined/empty string -> quitamos la clave
+    if (value === null || value === undefined || value === '') {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+
+    return next;
   });
+};
 
-  const zones = ['Centro', 'Norte', 'Sur', 'Este', 'Oeste'];
+  const statusConfig = {
+    reported: { variant: 'warning', label: 'Reportado', icon: '📍', color: '#f59e0b' },
+    accepted: { variant: 'info', label: 'Aceptado', icon: '✋', color: '#3b82f6' },
+    in_progress: { variant: 'primary', label: 'En progreso', icon: '🚧', color: '#8b5cf6' },
+    validating: { variant: 'secondary', label: 'Validando', icon: '⏳', color: '#6366f1' },
+    completed: { variant: 'success', label: 'Completado', icon: '✅', color: '#10b981' },
+    rejected: { variant: 'danger', label: 'Rechazado', icon: '❌', color: '#ef4444' },
+  };
 
-  // Placeholder para el mapa - en producción usarías react-leaflet
+  // Agrupar tickets por estado para estadísticas
+  const ticketsByStatus = tickets.reduce((acc, ticket) => {
+    acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div className="page map-page">
       <div className="page-header">
         <div>
           <h1 className="page-title">🗺️ Mapa Interactivo</h1>
           <p className="page-subtitle">
-            Visualiza los puntos sucios en tu zona
+            Visualiza los puntos sucios en tiempo real
           </p>
+        </div>
+        <div className="page-header-actions">
+          <Button 
+            variant="ghost" 
+            icon="🔄"
+            onClick={refreshTickets}
+          >
+            Actualizar
+          </Button>
+          <Button 
+            variant="primary" 
+            icon="📍"
+            onClick={() => navigate('/tickets/new')}
+          >
+            Reportar Nuevo
+          </Button>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <TicketFilters 
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
+      {/* Estadísticas de tickets filtrados */}
+      <div className="map-stats-bar">
+        <div className="map-stats-summary">
+          <span className="stats-total">
+            📊 <strong>{tickets.length}</strong> ticket{tickets.length !== 1 ? 's' : ''} encontrado{tickets.length !== 1 ? 's' : ''}
+          </span>
+
+          {filters.status && (
+            <Badge variant={statusConfig[filters.status]?.variant || 'default'}>
+              {statusConfig[filters.status]?.label || filters.status}
+            </Badge>
+          )}
         </div>
       </div>
 
       <div className="map-container">
+        {/* Sidebar con leyenda y estadísticas */}
         <div className="map-sidebar">
           <Card>
-            <h3 className="card-title">Filtrar por Zona</h3>
-            <div className="zone-filters">
-              <Button
-                variant={selectedZone === null ? 'primary' : 'ghost'}
-                fullWidth
-                onClick={() => setSelectedZone(null)}
-              >
-                Todas las zonas
-              </Button>
-              {zones.map(zone => (
-                <Button
-                  key={zone}
-                  variant={selectedZone === zone ? 'primary' : 'ghost'}
-                  fullWidth
-                  onClick={() => setSelectedZone(zone)}
-                >
-                  {zone}
-                </Button>
-              ))}
+            <h3 className="card-title">📊 Estadísticas</h3>
+            <div className="map-stats-detail">
+              {Object.entries(statusConfig).map(([status, config]) => {
+                const count = ticketsByStatus[status] || 0;
+                return (
+                  <div key={status} className="stat-item">
+                    <div className="stat-item-header">
+                      <Badge variant={config.variant} icon={config.icon}>
+                        {config.label}
+                      </Badge>
+                    </div>
+                    <div className="stat-item-value">{count}</div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
 
-          <Card className="map-legend">
-            <h4>Leyenda</h4>
-            <div className="legend-items">
-              <div className="legend-item">
-                <Badge variant="warning" icon="📍">Reportado</Badge>
-              </div>
-              <div className="legend-item">
-                <Badge variant="info" icon="✋">Aceptado</Badge>
-              </div>
-              <div className="legend-item">
-                <Badge variant="primary" icon="🚧">En progreso</Badge>
-              </div>
-              <div className="legend-item">
-                <Badge variant="success" icon="✅">Completado</Badge>
-              </div>
-            </div>
+          <Card>
+            <h4>💡 Cómo usar el mapa</h4>
+            <ul className="map-instructions">
+              <li>📍 Cada marcador representa un ticket</li>
+              <li>🎨 Los colores indican el estado</li>
+              <li>🔍 Usa los filtros para buscar</li>
+              <li>👆 Haz clic en un ticket para ver detalles</li>
+            </ul>
           </Card>
-
-          <div className="map-stats">
-            <p>
-              <strong>{tickets.length}</strong> tickets{' '}
-              {selectedZone ? `en ${selectedZone}` : 'en total'}
-            </p>
-          </div>
         </div>
 
+        {/* Vista del mapa */}
         <div className="map-view">
-          {/* Placeholder para mapa */}
+          {/* Placeholder para el mapa */}
           <div className="map-placeholder">
             <div className="map-placeholder-content">
               <span className="map-placeholder-icon">🗺️</span>
               <h3>Mapa Interactivo</h3>
               <p>Aquí se mostrará el mapa con react-leaflet</p>
-              <p className="map-placeholder-note">
-                Por ahora, mostramos los tickets en lista
-              </p>
+              <div className="map-placeholder-markers">
+                <p className="map-placeholder-note">
+                  Simulación de marcadores:
+                </p>
+                <div className="placeholder-markers-grid">
+                  {tickets.slice(0, 10).map(ticket => {
+                    const config = statusConfig[ticket.status];
+                    return (
+                      <div 
+                        key={ticket.id}
+                        className="placeholder-marker"
+                        style={{ backgroundColor: config.color }}
+                        title={ticket.title}
+                      >
+                        {config.icon}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Lista temporal de tickets */}
-          <div className="map-tickets-list">
-            {loading ? (
-              <p>Cargando tickets...</p>
-            ) : tickets.length > 0 ? (
-              tickets.map(ticket => (
-                <Card key={ticket.id} hoverable className="map-ticket-card">
-                  <div className="map-ticket-header">
-                    <Badge variant="warning">📍</Badge>
-                    <span className="map-ticket-zone">{ticket.zone}</span>
-                  </div>
-                  <h4>{ticket.title}</h4>
-                  <p className="map-ticket-address">
-                    {ticket.location.address}
-                  </p>
-                  <Button size="small" variant="primary" fullWidth>
-                    Ver Detalles
-                  </Button>
-                </Card>
-              ))
-            ) : (
-              <Card>
-                <p className="empty-message">
-                  No hay tickets en esta zona
-                </p>
-              </Card>
-            )}
-          </div>
+          {/* Lista de tickets filtrados */}
+        
         </div>
       </div>
     </div>

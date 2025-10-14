@@ -10,12 +10,20 @@ export default function Feed() {
   const [filters, setFilters] = useState({});
   const { tickets, loading, refreshTickets } = useTickets(filters);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+const handleFilterChange = (key, value) => {
+  setFilters(prev => {
+    const next = { ...prev };
+
+    // Si el valor es null/undefined/empty string -> quitamos la clave
+    if (value === null || value === undefined || value === '') {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+
+    return next;
+  });
+};
 
   return (
     <div className="page feed-page">

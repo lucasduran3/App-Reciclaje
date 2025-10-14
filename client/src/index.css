@@ -147,7 +147,7 @@ body {
   padding: var(--spacing-lg);
   position: sticky;
   top: 0;
-  height: calc(100vh - 80px);
+  height: calc(100vh);
   overflow-y: auto;
 }
 
@@ -1501,3 +1501,4 @@ body {
 .visible {
   display: block !important;
 }
+

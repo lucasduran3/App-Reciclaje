@@ -135,14 +135,14 @@
       "interactions": {
         "likes": 5,
         "comments": 2,
-        "views": 23,
+        "views": 24,
         "likedBy": [
           "user-002",
           "user-003"
         ]
       },
       "createdAt": "2025-10-13T09:30:00.000Z",
-      "updatedAt": "2025-10-13T09:30:00.000Z",
+      "updatedAt": "2025-10-14T11:08:15.329Z",
       "acceptedAt": null,
       "completedAt": null
     },
@@ -694,7 +694,7 @@
     }
   ],
   "metadata": {
-    "lastUpdated": "2025-10-13T22:15:56.013Z",
+    "lastUpdated": "2025-10-14T11:08:15.329Z",
     "version": "1.0.0",
     "totalUsers": 3,
     "totalTickets": 5,
