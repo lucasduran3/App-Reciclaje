@@ -12,19 +12,19 @@ export default function Header() {
     <header className="header">
       <div className="header-content">
         <div className="header-brand">
-          <h1 className="header-logo">🌱 Eco-Game</h1>
+          <h1 className="header-logo">App-Reciclaje</h1>
         </div>
         
         <div className="header-user">
           <div className="header-stats">
-            <Badge variant="primary" icon="⭐">
+            <Badge variant="primary" icon="">
               {currentUser.points} pts
             </Badge>
-            <Badge variant="secondary" icon="📊">
+            <Badge variant="secondary" icon="">
               Nivel {currentUser.level}
             </Badge>
             {currentUser.streak > 0 && (
-              <Badge variant="warning" icon="🔥">
+              <Badge variant="warning" icon="">
                 {currentUser.streak} días
               </Badge>
             )}

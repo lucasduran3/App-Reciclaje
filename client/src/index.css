@@ -488,11 +488,11 @@ body {
 }
 
 .progress-medium {
-  height: 12px;
+  height: 14px;
 }
 
 .progress-large {
-  height: 16px;
+  height: 18px;
 }
 
 .progress-bar {
@@ -781,13 +781,23 @@ body {
 }
 
 .mission-points {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
   font-weight: 600;
   color: var(--primary);
 }
 
 .mission-timer {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.mission-timer svg, .mission-points svg {
+  font-size: 1.2rem;
 }
 
 /* Leaderboard Components */
@@ -1014,8 +1024,7 @@ body {
 .progress-text {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  text-align: center;
-  margin-top: var(--spacing-md);
+  text-align: center;  
 }
 /* Feed Page /
 .feed-page {

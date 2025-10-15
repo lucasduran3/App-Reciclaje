@@ -4,7 +4,7 @@
       "id": "user-001",
       "name": "María González",
       "email": "maria@ecogame.com",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
+      "avatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
       "points": 1250,
       "level": 5,
       "streak": 7,
@@ -21,10 +21,7 @@
         "commentsGiven": 18,
         "commentsReceived": 22
       },
-      "badges": [
-        "Constante",
-        "Comprometido"
-      ],
+      "badges": ["Constante", "Comprometido"],
       "preferences": {
         "notifications": true,
         "publicProfile": true,
@@ -54,9 +51,7 @@
         "commentsGiven": 15,
         "commentsReceived": 11
       },
-      "badges": [
-        "Constante"
-      ],
+      "badges": ["Constante"],
       "preferences": {
         "notifications": true,
         "publicProfile": true,
@@ -86,11 +81,7 @@
         "commentsGiven": 24,
         "commentsReceived": 29
       },
-      "badges": [
-        "Constante",
-        "Comprometido",
-        "Dedicado"
-      ],
+      "badges": ["Constante", "Comprometido", "Dedicado"],
       "preferences": {
         "notifications": true,
         "publicProfile": true,
@@ -135,14 +126,11 @@
       "interactions": {
         "likes": 5,
         "comments": 2,
-        "views": 24,
-        "likedBy": [
-          "user-002",
-          "user-003"
-        ]
+        "views": 23,
+        "likedBy": ["user-002", "user-003"]
       },
       "createdAt": "2025-10-13T09:30:00.000Z",
-      "updatedAt": "2025-10-14T11:08:15.329Z",
+      "updatedAt": "2025-10-13T09:30:00.000Z",
       "acceptedAt": null,
       "completedAt": null
     },
@@ -181,10 +169,7 @@
         "likes": 12,
         "comments": 4,
         "views": 45,
-        "likedBy": [
-          "user-001",
-          "user-003"
-        ]
+        "likedBy": ["user-001", "user-003"]
       },
       "createdAt": "2025-10-12T14:20:00.000Z",
       "updatedAt": "2025-10-13T08:15:00.000Z",
@@ -227,10 +212,7 @@
         "likes": 18,
         "comments": 7,
         "views": 67,
-        "likedBy": [
-          "user-001",
-          "user-002"
-        ]
+        "likedBy": ["user-001", "user-002"]
       },
       "createdAt": "2025-10-11T11:00:00.000Z",
       "updatedAt": "2025-10-13T10:30:00.000Z",
@@ -278,11 +260,7 @@
         "likes": 34,
         "comments": 12,
         "views": 98,
-        "likedBy": [
-          "user-001",
-          "user-002",
-          "user-003"
-        ]
+        "likedBy": ["user-001", "user-002", "user-003"]
       },
       "createdAt": "2025-10-10T08:00:00.000Z",
       "updatedAt": "2025-10-12T16:45:00.000Z",
@@ -295,7 +273,7 @@
       "description": "Computadoras viejas, monitores y cables tirados en la vereda. Requiere disposición especial en punto de acopio certificado.",
       "location": {
         "lat": -31.2567,
-        "lng": -61.489,
+        "lng": -61.4890,
         "address": "Av. Italia 550, Rafaela"
       },
       "zone": "Este",
@@ -326,9 +304,7 @@
         "likes": 9,
         "comments": 3,
         "views": 31,
-        "likedBy": [
-          "user-003"
-        ]
+        "likedBy": ["user-003"]
       },
       "createdAt": "2025-10-12T07:15:00.000Z",
       "updatedAt": "2025-10-13T11:00:00.000Z",
@@ -341,7 +317,7 @@
       "id": "mission-daily-001",
       "title": "Reportar un punto sucio",
       "description": "Encuentra y reporta un lugar que necesite limpieza en tu zona",
-      "icon": "📍",
+      "icon": "fluent-color:megaphone-loud-32",
       "type": "daily",
       "category": "reporter",
       "goal": 1,
@@ -359,7 +335,7 @@
       "id": "mission-daily-002",
       "title": "Acepta un reto de limpieza",
       "description": "Acepta al menos un ticket reportado por otro usuario",
-      "icon": "✋",
+      "icon": "fluent-color:circle-multiple-hint-checkmark-48",
       "type": "daily",
       "category": "cleaner",
       "goal": 1,
@@ -376,7 +352,7 @@
       "id": "mission-daily-003",
       "title": "Valida una limpieza",
       "description": "Valida un ticket que hayas reportado y fue limpiado",
-      "icon": "✅",
+      "icon": "fluent-color:checkmark-circle-48",
       "type": "daily",
       "category": "validator",
       "goal": 1,
@@ -394,7 +370,7 @@
       "id": "mission-weekly-001",
       "title": "Limpiador Semanal",
       "description": "Completa la limpieza de 5 tickets esta semana",
-      "icon": "🧹",
+      "icon": "fluent-emoji-flat:broom",
       "type": "weekly",
       "category": "cleaner",
       "goal": 5,
@@ -411,7 +387,7 @@
       "id": "mission-weekly-002",
       "title": "Explorador Urbano",
       "description": "Reporta 10 puntos sucios en diferentes zonas",
-      "icon": "🔍",
+      "icon": "fluent-color:search-sparkle-48",
       "type": "weekly",
       "category": "reporter",
       "goal": 10,
@@ -428,7 +404,7 @@
       "id": "mission-weekly-003",
       "title": "Comunidad Activa",
       "description": "Da 20 likes y comenta en 5 tickets de otros usuarios",
-      "icon": "💬",
+      "icon": "fluent-color:comment-48",
       "type": "weekly",
       "category": "social",
       "goal": 25,
@@ -446,7 +422,7 @@
       "id": "mission-special-001",
       "title": "Racha de 7 días",
       "description": "Mantén una racha activa durante 7 días consecutivos",
-      "icon": "🔥",
+      "icon": "fluent-color:calendar-48",
       "type": "special",
       "category": "streak",
       "goal": 7,
@@ -470,10 +446,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=carlos",
       "content": "Pasé por ahí esta mañana, la situación sigue igual. ¡Hay que limpiarlo cuanto antes!",
       "likes": 3,
-      "likedBy": [
-        "user-001",
-        "user-003"
-      ],
+      "likedBy": ["user-001", "user-003"],
       "createdAt": "2025-10-13T10:15:00.000Z"
     },
     {
@@ -484,10 +457,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=ana",
       "content": "Puedo aceptar este ticket mañana temprano, tengo tiempo libre por la mañana.",
       "likes": 5,
-      "likedBy": [
-        "user-001",
-        "user-002"
-      ],
+      "likedBy": ["user-001", "user-002"],
       "createdAt": "2025-10-13T11:30:00.000Z"
     },
     {
@@ -498,9 +468,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=ana",
       "content": "Excelente trabajo reportando esto Carlos, es muy urgente que lo limpiemos.",
       "likes": 2,
-      "likedBy": [
-        "user-002"
-      ],
+      "likedBy": ["user-002"],
       "createdAt": "2025-10-12T15:00:00.000Z"
     },
     {
@@ -511,10 +479,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
       "content": "Ya lo acepté, voy esta tarde con bolsas. Llevaré todo al punto de acopio.",
       "likes": 6,
-      "likedBy": [
-        "user-002",
-        "user-003"
-      ],
+      "likedBy": ["user-002", "user-003"],
       "createdAt": "2025-10-13T08:20:00.000Z"
     },
     {
@@ -525,10 +490,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
       "content": "Esto necesita ayuda de la municipalidad, los muebles son muy pesados.",
       "likes": 4,
-      "likedBy": [
-        "user-002",
-        "user-003"
-      ],
+      "likedBy": ["user-002", "user-003"],
       "createdAt": "2025-10-11T12:30:00.000Z"
     },
     {
@@ -539,10 +501,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=carlos",
       "content": "Ya saqué los escombros y el cartón. Los muebles quedan para mañana con ayuda.",
       "likes": 8,
-      "likedBy": [
-        "user-001",
-        "user-003"
-      ],
+      "likedBy": ["user-001", "user-003"],
       "createdAt": "2025-10-13T10:35:00.000Z"
     },
     {
@@ -553,10 +512,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=carlos",
       "content": "¡Increíble la diferencia Ana! El parque quedó impecable 👏👏",
       "likes": 8,
-      "likedBy": [
-        "user-001",
-        "user-003"
-      ],
+      "likedBy": ["user-001", "user-003"],
       "createdAt": "2025-10-12T17:00:00.000Z"
     },
     {
@@ -567,10 +523,7 @@
       "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=ana",
       "content": "Gracias María por reportarlo. Los niños ya pueden jugar seguros ahora.",
       "likes": 12,
-      "likedBy": [
-        "user-001",
-        "user-002"
-      ],
+      "likedBy": ["user-001", "user-002"],
       "createdAt": "2025-10-12T17:15:00.000Z"
     }
   ],
@@ -585,11 +538,7 @@
       "level": 7,
       "streak": 14,
       "weeklyPoints": 450,
-      "badges": [
-        "Constante",
-        "Comprometido",
-        "Dedicado"
-      ]
+      "badges": ["Constante", "Comprometido", "Dedicado"]
     },
     {
       "userId": "user-001",
@@ -601,10 +550,7 @@
       "level": 5,
       "streak": 7,
       "weeklyPoints": 320,
-      "badges": [
-        "Constante",
-        "Comprometido"
-      ]
+      "badges": ["Constante", "Comprometido"]
     },
     {
       "userId": "user-002",
@@ -616,9 +562,7 @@
       "level": 4,
       "streak": 3,
       "weeklyPoints": 180,
-      "badges": [
-        "Constante"
-      ]
+      "badges": ["Constante"]
     }
   ],
   "acopioPoints": [
@@ -626,16 +570,12 @@
       "id": "acopio-001",
       "name": "Centro de Reciclaje Municipal",
       "location": {
-        "lat": -31.252,
-        "lng": -61.489,
+        "lat": -31.2520,
+        "lng": -61.4890,
         "address": "Av. Santa Fe 1500, Rafaela, Santa Fe"
       },
       "qrCode": "QR-ACOPIO-CENTRO-01",
-      "acceptedTypes": [
-        "recyclable",
-        "electronic",
-        "hazardous"
-      ],
+      "acceptedTypes": ["recyclable", "electronic", "hazardous"],
       "zone": "Centro",
       "schedule": "Lunes a Viernes 8:00-18:00, Sábados 9:00-13:00",
       "active": true
@@ -649,10 +589,7 @@
         "address": "Bv. Roca 1250, Barrio Alberdi, Rafaela"
       },
       "qrCode": "QR-ACOPIO-NORTE-01",
-      "acceptedTypes": [
-        "recyclable",
-        "general"
-      ],
+      "acceptedTypes": ["recyclable", "general"],
       "zone": "Norte",
       "schedule": "Lunes a Sábado 9:00-17:00",
       "active": true
@@ -661,15 +598,12 @@
       "id": "acopio-003",
       "name": "Ecopunto Barrio Sur",
       "location": {
-        "lat": -31.265,
-        "lng": -61.49,
+        "lat": -31.2650,
+        "lng": -61.4900,
         "address": "Barrio Santa Rosa, Rafaela"
       },
       "qrCode": "QR-ACOPIO-SUR-01",
-      "acceptedTypes": [
-        "recyclable",
-        "organic"
-      ],
+      "acceptedTypes": ["recyclable", "organic"],
       "zone": "Sur",
       "schedule": "Martes, Jueves y Sábado 10:00-16:00",
       "active": true
@@ -679,22 +613,18 @@
       "name": "Centro Ambiental Oeste",
       "location": {
         "lat": -31.2501,
-        "lng": -61.505,
+        "lng": -61.5050,
         "address": "Parque Industrial Oeste, Rafaela"
       },
       "qrCode": "QR-ACOPIO-OESTE-01",
-      "acceptedTypes": [
-        "bulky",
-        "electronic",
-        "hazardous"
-      ],
+      "acceptedTypes": ["bulky", "electronic", "hazardous"],
       "zone": "Oeste",
       "schedule": "Miércoles y Viernes 8:00-12:00",
       "active": true
     }
   ],
   "metadata": {
-    "lastUpdated": "2025-10-14T11:08:15.329Z",
+    "lastUpdated": "2025-10-13T12:00:00.000Z",
     "version": "1.0.0",
     "totalUsers": 3,
     "totalTickets": 5,

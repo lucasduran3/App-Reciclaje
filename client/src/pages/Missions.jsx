@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMissions } from '../hooks/useMissions';
+import { Icon } from '@iconify/react';
 import MissionList from '../components/missions/MissionList';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -9,11 +10,11 @@ export default function Missions() {
   const { missions, loading, refreshMissions } = useMissions();
 
   const filterOptions = [
-    { value: 'all', label: 'Todas', icon: '📋' },
-    { value: 'active', label: 'Activas', icon: '🎯' },
-    { value: 'completed', label: 'Completadas', icon: '✅' },
-    { value: 'daily', label: 'Diarias', icon: '📅' },
-    { value: 'weekly', label: 'Semanales', icon: '📆' },
+    { value: 'all', label: 'Todas', icon: <Icon icon="fluent-color:text-bullet-list-square-32"></Icon> },
+    { value: 'active', label: 'Activas', icon: <Icon icon="fluent-color:lightbulb-filament-48"></Icon> },
+    { value: 'completed', label: 'Completadas', icon: <Icon icon="fluent-color:checkmark-circle-48"></Icon> },
+    { value: 'daily', label: 'Diarias', icon: <Icon icon="fluent-color:calendar-48"></Icon> },
+    { value: 'weekly', label: 'Semanales', icon: <Icon icon="fluent-color:calendar-48"></Icon> },
   ];
 
   const activeMissions = missions.filter(m => !m.completed);
@@ -26,14 +27,14 @@ export default function Missions() {
     <div className="page missions-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">🎯 Misiones</h1>
+          <h1 className="page-title"><Icon icon="fluent-color:pin-48"></Icon> Misiones</h1>
           <p className="page-subtitle">
             Completa misiones para ganar puntos extra y subir de nivel
           </p>
         </div>
         <Button 
           variant="ghost" 
-          icon="🔄"
+          icon={<Icon icon="fluent-color:arrow-sync-24"></Icon>}
           onClick={refreshMissions}
         >
           Actualizar
@@ -43,7 +44,7 @@ export default function Missions() {
       {/* Stats Cards */}
       <div className="missions-stats">
         <Card className="stat-card">
-          <div className="stat-icon">🎯</div>
+          <div className="stat-icon"><Icon icon="fluent-color:lightbulb-filament-48"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{activeMissions.length}</div>
             <div className="stat-label">Activas</div>
@@ -51,7 +52,7 @@ export default function Missions() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><Icon icon="fluent-color:checkmark-circle-48"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{completedMissions.length}</div>
             <div className="stat-label">Completadas</div>
@@ -59,7 +60,7 @@ export default function Missions() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">⭐</div>
+          <div className="stat-icon"><Icon icon="fluent-color:star-48"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{totalPoints}</div>
             <div className="stat-label">Puntos Ganados</div>

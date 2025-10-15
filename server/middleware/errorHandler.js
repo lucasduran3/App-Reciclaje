@@ -1,9 +1,3 @@
-/**
- * Error Handler Middleware
- * 
- * Manejo centralizado de errores con respuestas consistentes.
- */
-
 export function errorHandler(err, req, res, next) {
   // Log del error
   console.error('❌ Error:', {

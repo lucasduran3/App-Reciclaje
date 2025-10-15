@@ -1,7 +1,3 @@
-/**
- * ID Generator - Generador de IDs únicos
- */
-
 import { randomBytes } from 'crypto';
 
 /**

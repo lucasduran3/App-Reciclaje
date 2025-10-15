@@ -31,16 +31,14 @@ async function initializeServer() {
 
     // Iniciar servidor
     app.listen(PORT, () => {
-      console.log('\n🚀 ================================');
-      console.log(`   Eco-Game Server Running`);
       console.log('   ================================');
-      console.log(`   🌐 URL: http://localhost:${PORT}`);
-      console.log(`   📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`   📂 Data file: ${fileService.dataPath}`);
+      console.log(`   URL: http://localhost:${PORT}`);
+      console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`   Data file: ${fileService.dataPath}`);
       console.log('   ================================\n');
     });
   } catch (error) {
-    console.error('❌ Failed to initialize server:', error);
+    console.error('Failed to initialize server:', error);
     process.exit(1);
   }
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTickets } from "../hooks/useTickets";
+import { Icon } from "@iconify/react";
 import Card from "../components/common/Card";
 import Avatar from "../components/common/Avatar";
 import Badge from "../components/common/Badge";
@@ -40,18 +41,18 @@ export default function UserProfile() {
             <h1 className="profile-name">{currentUser.name}</h1>
             <p className="profile-email">{currentUser.email}</p>
             <div className="profile-badges-preview">
-              <Badge variant="primary" icon="⭐">
+              <Badge variant="primary" icon={<Icon icon="fluent-color:star-48"></Icon>}>
                 {currentUser.points} puntos
               </Badge>
-              <Badge variant="secondary" icon="📊">
+              <Badge variant="secondary" icon={<Icon icon="fluent-color:calendar-data-bar-16"></Icon>}>
                 Nivel {currentUser.level}
               </Badge>
               {currentUser.streak > 0 && (
-                <Badge variant="warning" icon="🔥">
+                <Badge variant="warning" icon={<Icon icon="fluent-color:calendar-data-bar-16"></Icon>}>
                   {currentUser.streak} días
                 </Badge>
               )}
-              <Badge variant="default" icon="📍">
+              <Badge variant="default" icon={<Icon icon="fluent-color:megaphone-loud-32"></Icon>}>
                 {currentUser.zone}
               </Badge>
             </div>
@@ -59,7 +60,7 @@ export default function UserProfile() {
         </div>
 
         <div className="profile-actions">
-          <Button variant="ghost" icon="⚙️">
+          <Button variant="ghost" icon={<Icon icon="fluent-color:settings-48"></Icon>}>
             Configuración
           </Button>
         </div>
@@ -67,7 +68,7 @@ export default function UserProfile() {
 
       {/* Level Progress */}
       <Card>
-        <h3 className="card-title">📊 Progreso de Nivel</h3>
+        <h3 className="card-title"><Icon icon="fluent-color:calendar-data-bar-16"></Icon> Progreso de Nivel</h3>
         <ProgressBar
           current={currentUser.points % nextLevelPoints}
           max={nextLevelPoints}
@@ -84,7 +85,7 @@ export default function UserProfile() {
       {/* Stats Grid */}
       <div className="profile-stats-grid">
         <Card className="stat-card">
-          <div className="stat-icon">📍</div>
+          <div className="stat-icon"><Icon icon="fluent-color:megaphone-loud-32"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">
               {currentUser.stats.ticketsReported}
@@ -94,7 +95,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">✋</div>
+          <div className="stat-icon"><Icon icon="fluent-color:circle-multiple-hint-checkmark-48"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">
               {currentUser.stats.ticketsAccepted}
@@ -104,7 +105,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><Icon icon="fluent-color:arrow-clockwise-dashes-16"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{currentUser.stats.ticketsCleaned}</div>
             <div className="stat-label">Tickets Limpiados</div>
@@ -112,7 +113,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">🔍</div>
+          <div className="stat-icon"><Icon icon="fluent-color:person-available-16"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">
               {currentUser.stats.ticketsValidated}
@@ -122,7 +123,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">🎯</div>
+          <div className="stat-icon"><Icon icon="fluent-color:checkmark-circle-48"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">
               {currentUser.stats.missionsCompleted}
@@ -132,7 +133,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">❤️</div>
+          <div className="stat-icon"><Icon icon="fluent-color:heart-32"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{currentUser.stats.likesReceived}</div>
             <div className="stat-label">Likes Recibidos</div>
@@ -140,7 +141,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">💬</div>
+          <div className="stat-icon"><Icon icon="fluent-color:comment-multiple-16"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">
               {currentUser.stats.commentsReceived}
@@ -150,7 +151,7 @@ export default function UserProfile() {
         </Card>
 
         <Card className="stat-card">
-          <div className="stat-icon">🏆</div>
+          <div className="stat-icon"><Icon icon="fluent-color:trophy-16"></Icon></div>
           <div className="stat-content">
             <div className="stat-value">{currentUser.badges.length}</div>
             <div className="stat-label">Insignias Obtenidas</div>
@@ -159,7 +160,7 @@ export default function UserProfile() {
       </div>
       {/* Badges Collection */}
       <Card>
-        <h3 className="card-title">🏆 Insignias</h3>
+        <h3 className="card-title"><Icon icon="fluent-color:trophy-16"></Icon> Insignias</h3>
         {currentUser.badges.length > 0 ? (
           <div className="badges-grid">
             {currentUser.badges.map((badge) => (
@@ -178,7 +179,7 @@ export default function UserProfile() {
       {/* Activity Summary */}
       <div className="profile-activity">
         <Card>
-          <h3 className="card-title">📍 Mis Reportes</h3>
+          <h3 className="card-title"><Icon icon="fluent-color:megaphone-loud-32"></Icon> Mis Reportes</h3>
           <div className="activity-stats">
             <p>
               <strong>{reportedTickets.length}</strong> tickets reportados

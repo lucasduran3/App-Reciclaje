@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { useAuth } from '../context/AuthContext';
+import { Icon } from '@iconify/react';
 import LeaderboardTable from '../components/leaderboard/LeaderboardTable';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -27,14 +28,14 @@ export default function Leaderboard() {
     <div className="page leaderboard-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">🏆 Ranking</h1>
+          <h1 className="page-title"><Icon icon="fluent-color:trophy-16"></Icon> Ranking</h1>
           <p className="page-subtitle">
             Compite con otros jugadores y escala posiciones
           </p>
         </div>
         <Button 
           variant="ghost" 
-          icon="🔄"
+          icon={<Icon icon="fluent-color:arrow-sync-16"></Icon>}
           onClick={refreshLeaderboard}
         >
           Actualizar
@@ -47,7 +48,7 @@ export default function Leaderboard() {
           variant={selectedZone === null ? 'primary' : 'ghost'}
           onClick={() => setSelectedZone(null)}
         >
-          🌎 Global
+          Global
         </Button>
         {zones.map(zone => (
           <Button
@@ -78,10 +79,10 @@ export default function Leaderboard() {
               <div className="position-info">
                 <h4>{currentUserEntry.name}</h4>
                 <div className="position-stats">
-                  <Badge variant="primary">⭐ {currentUserEntry.points} pts</Badge>
-                  <Badge variant="secondary">📊 Nivel {currentUserEntry.level}</Badge>
+                  <Badge variant="primary"><Icon icon="fluent-color:star-48"></Icon> {currentUserEntry.points} pts</Badge>
+                  <Badge variant="secondary"><Icon icon="fluent-color:calendar-data-bar-16"></Icon> Nivel {currentUserEntry.level}</Badge>
                   {currentUserEntry.streak > 0 && (
-                    <Badge variant="warning">🔥 {currentUserEntry.streak} días</Badge>
+                    <Badge variant="warning"><Icon icon="fluent-emoji-flat:fire"></Icon> {currentUserEntry.streak} días</Badge>
                   )}
                 </div>
               </div>

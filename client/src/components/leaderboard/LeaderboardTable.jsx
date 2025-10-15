@@ -2,6 +2,7 @@ import React from 'react';
 import Avatar from '../common/Avatar';
 import Badge from '../common/Badge';
 import { useAuth } from '../../context/AuthContext';
+import { Icon } from '@iconify/react';
 
 export default function LeaderboardTable({ entries, loading }) {
   const { currentUser } = useAuth();
@@ -13,16 +14,16 @@ export default function LeaderboardTable({ entries, loading }) {
   if (!entries || entries.length === 0) {
     return (
       <div className="empty-state">
-        <span className="empty-icon">🏆</span>
+        <span className="empty-icon"><Icon icon="fluent-color:trophy-48"></Icon></span>
         <h3>No hay datos de ranking</h3>
       </div>
     );
   }
 
   const getMedalIcon = (position) => {
-    if (position === 1) return '🥇';
-    if (position === 2) return '🥈';
-    if (position === 3) return '🥉';
+    if (position === 1) return <Icon icon="fluent-emoji-flat:1st-place-medal"></Icon>;
+    if (position === 2) return <Icon icon="fluent-emoji-flat:2nd-place-medal"></Icon>;
+    if (position === 3) return <Icon icon="fluent-emoji-flat:3rd-place-medal"></Icon>;
     return null;
   };
 
@@ -73,7 +74,7 @@ export default function LeaderboardTable({ entries, loading }) {
                 </td>
                 <td className="col-streak">
                   {entry.streak > 0 ? (
-                    <Badge variant="warning" icon="🔥">
+                    <Badge variant="warning" icon={<Icon icon="fluent-emoji-flat:fire"></Icon>}>
                       {entry.streak} días
                     </Badge>
                   ) : (

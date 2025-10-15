@@ -2,6 +2,7 @@ import React from 'react';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
 import ProgressBar from '../common/ProgressBar';
+import { Icon } from '@iconify/react';
 
 export default function MissionCard({ mission }) {
   const typeColors = {
@@ -22,17 +23,17 @@ export default function MissionCard({ mission }) {
   return (
     <Card className={`mission-card ${mission.completed ? 'mission-completed' : ''}`}>
       <div className="mission-card-header">
-        <span className="mission-icon">{mission.icon}</span>
+        <span className="mission-icon"><Icon icon={mission.icon}></Icon></span>
         <div className="mission-badges">
           <Badge variant={typeColors[mission.type]}>
             {typeLabels[mission.type]}
           </Badge>
-          {mission.completed && (
+          {/*{mission.completed && (
             <Badge variant="success" icon="✅">Completada</Badge>
           )}
           {isExpired && !mission.completed && (
-            <Badge variant="danger" icon="⏰">Expirada</Badge>
-          )}
+            <Badge variant="danger" icon={<Icon icon="fluent-color:clock-alarm-48"></Icon>}>Expirada</Badge>
+          )}*/}
         </div>
       </div>
 
@@ -48,11 +49,11 @@ export default function MissionCard({ mission }) {
 
       <div className="mission-footer">
         <div className="mission-reward">
-          <span className="mission-points">⭐ {mission.points} puntos</span>
+          <span className="mission-points"><Icon icon="fluent-color:star-48"></Icon> {mission.points} puntos</span>
         </div>
         {timeLeft && !mission.completed && (
           <div className="mission-time">
-            <span className="mission-timer">⏰ {timeLeft}</span>
+            <span className="mission-timer"><Icon icon="fluent-color:clock-alarm-32"></Icon> {timeLeft}</span>
           </div>
         )}
       </div>
