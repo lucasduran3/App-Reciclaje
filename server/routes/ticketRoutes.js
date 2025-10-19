@@ -16,5 +16,6 @@ router.post('/:id/accept', ticketController.accept.bind(ticketController));
 router.post('/:id/complete', ticketController.complete.bind(ticketController));
 router.post('/:id/validate', ticketController.validate.bind(ticketController));
 router.post('/:id/like', ticketController.like.bind(ticketController));
+router.post('/:id/comments', ticketController.addComment.bind(ticketController));
 
 export default router;

@@ -6,6 +6,7 @@ import fileService from "../services/fileService.js";
 import {
   validateTicket,
   validateTicketStatusTransition,
+  validateComment,
 } from "../services/validationService.js";
 import { calculateTicketPoints } from "../services/pointsService.js";
 import { generateId } from "../utils/idGenerator.js";
@@ -510,8 +511,8 @@ class TicketController {
       next(error);
     }
   }
-  /**
 
+  /**
 POST /api/tickets/:id/like
 Da like a un ticket
 */
@@ -572,6 +573,81 @@ Da like a un ticket
           ? "Like added"
           : "Like removed",
         data: updatedTicket,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
+   * POST - Comentar ticket
+   */
+
+  async addComment(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { userId, text } = req.body;
+
+      const validation = validateComment(text);
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          errors: validation.errors,
+        });
+      }
+
+      const ticket = fileService.findById("tickets", id);
+      if (!ticket) {
+        return res.status(404).json({
+          succes: false,
+          error: "Ticket not found.",
+        });
+      }
+
+      const user = fileService.findById("users", userId);
+      if (!user) {
+        return res.status(404).json({
+          succes: false,
+          error: "User not found.",
+        });
+      }
+
+      //Sanitizar texto
+      const sanitizedText = text
+        .trim()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/</g, "gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+      const newComment = {
+        id: `commnet-${Date.now()}`,
+        ticketId: id,
+        userId: userId,
+        userName: user.name,
+        userAvatar: user.avatar,
+        content: sanitizedText,
+        likes: 0,
+        likedBy: [],
+        createdAt: new Date().toISOString(),
+      };
+
+      await fileService.addToCollection("comments", newComment);
+
+      ticket.interactions.comments++;
+      await fileService.updateCollection("tickets", id, {
+        interactions: ticket.interactions,
+      });
+
+      user.stats.commentsGiven++;
+      await fileService.updateCollection("users", userId, {
+        stats: user.stats,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Comment added succesfully",
+        data: newComment,
       });
     } catch (error) {
       next(error);

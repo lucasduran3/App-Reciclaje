@@ -2,7 +2,7 @@
  * Ticket Service - Servicio para operaciones de tickets
  */
 
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 class TicketService {
   /**
@@ -24,9 +24,9 @@ class TicketService {
    * Crea un nuevo ticket (reportar)
    */
   async create(ticketData) {
-    return apiClient.request('/tickets', {
-      method: 'POST',
-      body: JSON.stringify(ticketData)
+    return apiClient.request("/tickets", {
+      method: "POST",
+      body: JSON.stringify(ticketData),
     });
   }
 
@@ -35,8 +35,8 @@ class TicketService {
    */
   async update(id, updates) {
     return apiClient.request(`/tickets/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates)
+      method: "PUT",
+      body: JSON.stringify(updates),
     });
   }
 
@@ -45,7 +45,7 @@ class TicketService {
    */
   async delete(id) {
     return apiClient.request(`/tickets/${id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
   }
 
@@ -54,8 +54,8 @@ class TicketService {
    */
   async accept(id, userId) {
     return apiClient.request(`/tickets/${id}/accept`, {
-      method: 'POST',
-      body: JSON.stringify({ userId })
+      method: "POST",
+      body: JSON.stringify({ userId }),
     });
   }
 
@@ -64,8 +64,8 @@ class TicketService {
    */
   async complete(id, data) {
     return apiClient.request(`/tickets/${id}/complete`, {
-      method: 'POST',
-      body: JSON.stringify(data)
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
@@ -74,8 +74,8 @@ class TicketService {
    */
   async validate(id, userId, approved, rejectionReason) {
     return apiClient.request(`/tickets/${id}/validate`, {
-      method: 'POST',
-      body: JSON.stringify({ userId, approved, rejectionReason })
+      method: "POST",
+      body: JSON.stringify({ userId, approved, rejectionReason }),
     });
   }
 
@@ -84,19 +84,26 @@ class TicketService {
    */
   async like(id, userId) {
     return apiClient.request(`/tickets/${id}/like`, {
-      method: 'POST',
-      body: JSON.stringify({ userId })
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  async addComment(id, userId, text) {
+    return apiClient.request(`/tickets/${id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ userId, text }),
     });
   }
 
   /**
    * Obtiene tickets por usuario
    */
-  async getByUser(userId, role = 'reported') {
+  async getByUser(userId, role = "reported") {
     const filterMap = {
       reported: { reportedBy: userId },
       accepted: { acceptedBy: userId },
-      validated: { validatedBy: userId }
+      validated: { validatedBy: userId },
     };
 
     return this.getAll(filterMap[role] || {});

@@ -19,6 +19,7 @@ router.use("/tickets", ticketRoutes);
 router.use("/missions", missionRoutes);
 router.use("/comments", commentRoutes);
 router.use("/leaderboard", leaderboardRoutes);
+router.use('/api/comments', commentRoutes);
 
 // Health check
 router.get("/health", (req, res) => {
