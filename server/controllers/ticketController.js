@@ -6,7 +6,6 @@ import fileService from "../services/fileService.js";
 import {
   validateTicket,
   validateTicketStatusTransition,
-  validateComment,
 } from "../services/validationService.js";
 import { calculateTicketPoints } from "../services/pointsService.js";
 import { generateId } from "../utils/idGenerator.js";
@@ -423,6 +422,7 @@ class TicketController {
           error: "User not found",
         });
       }
+
       if (approved) {
         // Validación aprobada - completar ticket
         const points = calculateTicketPoints(ticket);
@@ -513,13 +513,14 @@ class TicketController {
   }
 
   /**
-POST /api/tickets/:id/like
-Da like a un ticket
-*/
+   * POST /api/tickets/:id/like
+   * Da like a un ticket
+   */
   async like(req, res, next) {
     try {
       const { id } = req.params;
       const { userId } = req.body;
+
       const ticket = fileService.findById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
@@ -527,6 +528,7 @@ Da like a un ticket
           error: "Ticket not found",
         });
       }
+
       const user = fileService.findById("users", userId);
       if (!user) {
         return res.status(404).json({
@@ -534,6 +536,7 @@ Da like a un ticket
           error: "User not found",
         });
       }
+
       // Verificar si ya dio like
       if (ticket.interactions.likedBy.includes(userId)) {
         // Quitar like
@@ -545,6 +548,7 @@ Da like a un ticket
         // Agregar like
         ticket.interactions.likedBy.push(userId);
         ticket.interactions.likes++;
+
         // Dar puntos al dueño del ticket
         const reporter = fileService.findById("users", ticket.reportedBy);
         if (reporter) {
@@ -554,12 +558,14 @@ Da like a un ticket
             points: reporter.points + 5,
           });
         }
+
         // Actualizar stats del usuario que dio like
         user.stats.likesGiven++;
         await fileService.updateInCollection("users", userId, {
           stats: user.stats,
         });
       }
+
       const updatedTicket = await fileService.updateInCollection(
         "tickets",
         id,
@@ -567,6 +573,7 @@ Da like a un ticket
           interactions: ticket.interactions,
         }
       );
+
       res.json({
         success: true,
         message: ticket.interactions.likedBy.includes(userId)
@@ -578,50 +585,56 @@ Da like a un ticket
       next(error);
     }
   }
-  /**
-   * POST - Comentar ticket
-   */
 
+  /**
+   * POST /api/tickets/:id/comments
+   * Añade un comentario a un ticket
+   */
   async addComment(req, res, next) {
     try {
       const { id } = req.params;
       const { userId, text } = req.body;
 
-      const validation = validateComment(text);
-      if (!validation.valid) {
+      if (!text || typeof text !== 'string' || text.trim().length === 0) {
         return res.status(400).json({
           success: false,
-          errors: validation.errors,
+          error: "Comment text is required and cannot be empty",
+        });
+      }
+
+      if (text.trim().length > 500) {
+        return res.status(400).json({
+          success: false,
+          error: "Comment text cannot exceed 500 characters",
         });
       }
 
       const ticket = fileService.findById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
-          succes: false,
-          error: "Ticket not found.",
+          success: false,
+          error: "Ticket not found",
         });
       }
 
       const user = fileService.findById("users", userId);
       if (!user) {
         return res.status(404).json({
-          succes: false,
-          error: "User not found.",
+          success: false,
+          error: "User not found",
         });
       }
 
-      //Sanitizar texto
       const sanitizedText = text
         .trim()
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/</g, "gt;")
+        .replace(/>/g, "&gt;")  // ✅ Corregido: era /</g
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
       const newComment = {
-        id: `commnet-${Date.now()}`,
+        id: `comment-${Date.now()}`,  // ✅ Corregido
         ticketId: id,
         userId: userId,
         userName: user.name,
@@ -635,18 +648,19 @@ Da like a un ticket
       await fileService.addToCollection("comments", newComment);
 
       ticket.interactions.comments++;
-      await fileService.updateCollection("tickets", id, {
+      await fileService.updateInCollection("tickets", id, {
         interactions: ticket.interactions,
       });
 
+      // Actualizar stats del usuario
       user.stats.commentsGiven++;
-      await fileService.updateCollection("users", userId, {
+      await fileService.updateInCollection("users", userId, {
         stats: user.stats,
       });
 
       res.status(201).json({
         success: true,
-        message: "Comment added succesfully",
+        message: "Comment added successfully",
         data: newComment,
       });
     } catch (error) {

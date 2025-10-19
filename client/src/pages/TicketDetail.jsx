@@ -95,7 +95,7 @@ export default function TicketDetail() {
   const handleCommentAdded = async (text) => {
     await addComment(text);
     // Recargar comentarios
-    const response = await apiClient.request(`/comments/ticket/${id}`);
+    const response = await apiClient.request(`/tickets/${id}/comment`);
     setComments(response.data || []);
   };
 
