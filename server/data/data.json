@@ -18,7 +18,7 @@
         "missionsCompleted": 23,
         "likesGiven": 49,
         "likesReceived": 57,
-        "commentsGiven": 20,
+        "commentsGiven": 32,
         "commentsReceived": 22
       },
       "badges": [
@@ -31,7 +31,7 @@
         "theme": "light"
       },
       "createdAt": "2025-09-01T10:00:00.000Z",
-      "updatedAt": "2025-10-19T21:26:42.495Z"
+      "updatedAt": "2025-10-19T21:52:50.085Z"
     },
     {
       "id": "user-002",
@@ -134,8 +134,8 @@
       "pointsAwarded": null,
       "interactions": {
         "likes": 6,
-        "comments": 4,
-        "views": 65,
+        "comments": 15,
+        "views": 101,
         "likedBy": [
           "user-002",
           "user-003",
@@ -143,7 +143,7 @@
         ]
       },
       "createdAt": "2025-10-13T09:30:00.000Z",
-      "updatedAt": "2025-10-19T21:26:52.172Z",
+      "updatedAt": "2025-10-19T21:53:21.345Z",
       "acceptedAt": null,
       "completedAt": null
     },
@@ -181,13 +181,13 @@
       "interactions": {
         "likes": 11,
         "comments": 4,
-        "views": 62,
+        "views": 64,
         "likedBy": [
           "user-003"
         ]
       },
       "createdAt": "2025-10-12T14:20:00.000Z",
-      "updatedAt": "2025-10-19T21:24:38.619Z",
+      "updatedAt": "2025-10-19T21:53:35.234Z",
       "acceptedAt": "2025-10-13T08:15:00.000Z",
       "completedAt": null
     },
@@ -226,14 +226,14 @@
       "interactions": {
         "likes": 18,
         "comments": 7,
-        "views": 71,
+        "views": 75,
         "likedBy": [
           "user-001",
           "user-002"
         ]
       },
       "createdAt": "2025-10-11T11:00:00.000Z",
-      "updatedAt": "2025-10-19T21:14:26.782Z",
+      "updatedAt": "2025-10-19T21:53:46.595Z",
       "acceptedAt": "2025-10-12T09:00:00.000Z",
       "completedAt": null
     },
@@ -276,8 +276,8 @@
       },
       "interactions": {
         "likes": 34,
-        "comments": 12,
-        "views": 102,
+        "comments": 13,
+        "views": 105,
         "likedBy": [
           "user-002",
           "user-003",
@@ -285,7 +285,7 @@
         ]
       },
       "createdAt": "2025-10-10T08:00:00.000Z",
-      "updatedAt": "2025-10-17T20:48:25.959Z",
+      "updatedAt": "2025-10-19T21:52:50.090Z",
       "acceptedAt": "2025-10-10T10:30:00.000Z",
       "completedAt": "2025-10-12T16:45:00.000Z"
     },
@@ -325,13 +325,13 @@
       "interactions": {
         "likes": 9,
         "comments": 3,
-        "views": 35,
+        "views": 37,
         "likedBy": [
           "user-003"
         ]
       },
       "createdAt": "2025-10-12T07:15:00.000Z",
-      "updatedAt": "2025-10-17T20:59:33.406Z",
+      "updatedAt": "2025-10-19T21:53:05.084Z",
       "acceptedAt": "2025-10-12T13:30:00.000Z",
       "completedAt": null
     }
@@ -594,6 +594,138 @@
       "likes": 0,
       "likedBy": [],
       "createdAt": "2025-10-19T21:26:42.492Z"
+    },
+    {
+      "id": "comment-1760909628009",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "Buenas tardes",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:33:48.009Z"
+    },
+    {
+      "id": "comment-1760909664275",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "este comentario tira error?",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:34:24.275Z"
+    },
+    {
+      "id": "comment-1760909691619",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "new",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:34:51.619Z"
+    },
+    {
+      "id": "comment-1760909714638",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:35:14.638Z"
+    },
+    {
+      "id": "comment-1760909932274",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:38:52.274Z"
+    },
+    {
+      "id": "comment-1760909938147",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err 2",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:38:58.147Z"
+    },
+    {
+      "id": "comment-1760909959715",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:39:19.715Z"
+    },
+    {
+      "id": "comment-1760909993213",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "dasd",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:39:53.213Z"
+    },
+    {
+      "id": "comment-1760910035498",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:40:35.498Z"
+    },
+    {
+      "id": "comment-1760910061406",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "err",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:41:01.406Z"
+    },
+    {
+      "id": "comment-1760910394153",
+      "ticketId": "ticket-001",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "esto da error?",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:46:34.153Z"
+    },
+    {
+      "id": "comment-1760910770083",
+      "ticketId": "ticket-004",
+      "userId": "user-001",
+      "userName": "María González",
+      "userAvatar": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jocelyn&eyebrows[]&eyes=closed,default,eyeRoll,happy,hearts,side,squint,surprised,wink,winkWacky,xDizzy&mouth=default,disbelief,eating,grimace,sad,screamOpen,serious,smile,tongue,twinkle,vomit",
+      "content": "muy bien",
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2025-10-19T21:52:50.083Z"
     }
   ],
   "leaderboard": [
@@ -716,7 +848,7 @@
     }
   ],
   "metadata": {
-    "lastUpdated": "2025-10-19T21:26:52.172Z",
+    "lastUpdated": "2025-10-19T21:53:46.595Z",
     "version": "1.0.0",
     "totalUsers": 3,
     "totalTickets": 5,

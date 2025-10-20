@@ -35,8 +35,9 @@ export default function TicketActions({
       setCommentText('');
       setShowCommentForm(false);
     } catch (error) {
+      console.log("Error aqui");
       console.error('Error submitting comment:', error);
-      alert('Error al enviar comentario');
+      alert('Error al enviar comentario', error.message);
     } finally {
       setIsSubmitting(false);
     }
