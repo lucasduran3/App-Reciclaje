@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import fileService from './services/fileService.js';
+import supabaseService from './services/supabaseService.js';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -16,11 +16,11 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
-// Inicializar FileService antes de levantar servidor
+// Inicializar servidor con Supabase
 async function initializeServer() {
   try {
-    // Inicializar sistema de archivos
-    await fileService.initialize();
+    // Inicializar conexión a Supabase
+    await supabaseService.initialize();
 
     // Montar rutas
     app.use('/api', routes);
@@ -32,13 +32,14 @@ async function initializeServer() {
     // Iniciar servidor
     app.listen(PORT, () => {
       console.log('   ================================');
-      console.log(`   URL: http://localhost:${PORT}`);
-      console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`   Data file: ${fileService.dataPath}`);
+      console.log(`   🚀 Server running on port ${PORT}`);
+      console.log(`   📡 URL: http://localhost:${PORT}`);
+      console.log(`   🗄️  Database: Supabase`);
+      console.log(`   🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log('   ================================\n');
     });
   } catch (error) {
-    console.error('Failed to initialize server:', error);
+    console.error('❌ Failed to initialize server:', error);
     process.exit(1);
   }
 }
