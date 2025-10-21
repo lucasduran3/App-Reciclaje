@@ -8,8 +8,18 @@ import Missions from "./pages/Missions";
 import Leaderboard from "./pages/Leaderboard";
 import UserProfile from "./pages/UserProfile";
 import TicketDetail from "./pages/TicketDetail";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
   {
     path: "/",
     element: <Layout />,

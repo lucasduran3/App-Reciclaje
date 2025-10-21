@@ -9,6 +9,7 @@ import ticketRoutes from "./ticketRoutes.js";
 import missionRoutes from "./missionRoutes.js";
 import commentRoutes from "./commentRoutes.js";
 import leaderboardRoutes from "./leaderboardRoutes.js";
+import authRoutes from "./authRoutes.js";
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.use("/missions", missionRoutes);
 router.use("/comments", commentRoutes);
 router.use("/leaderboard", leaderboardRoutes);
 router.use('/comments', commentRoutes);
+router.use('/auth', authRoutes);
 
 // Health check
 router.get("/health", (req, res) => {
