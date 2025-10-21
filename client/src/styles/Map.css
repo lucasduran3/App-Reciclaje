@@ -1,0 +1,111 @@
+.map-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--spacing-lg);
+  height: calc(100vh - 200px);
+}
+.map-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  overflow-y: auto;
+}
+.zone-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+.map-legend {
+  margin-top: var(--spacing-md);
+}
+.map-legend h4 {
+  margin-bottom: var(--spacing-md);
+  font-size: 1rem;
+}
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+}
+.map-stats {
+  padding: var(--spacing-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.map-view {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.map-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.map-placeholder-content {
+  text-align: center;
+  padding: var(--spacing-2xl);
+}
+.map-placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-lg);
+}
+.map-placeholder h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-md);
+  color: var(--text);
+}
+.map-placeholder p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+.map-placeholder-note {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.map-tickets-list {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  width: 300px;
+  max-height: calc(100% - 2 * var(--spacing-lg));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+.map-ticket-card {
+  background: var(--surface);
+  padding: var(--spacing-md);
+}
+.map-ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+.map-ticket-zone {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.map-ticket-card h4 {
+  font-size: 1rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text);
+}
+.map-ticket-address {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}

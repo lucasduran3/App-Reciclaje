@@ -1,0 +1,141 @@
+.leaderboard-table {
+  overflow-x: auto;
+}
+
+.leaderboard-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: var(--spacing-md);
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-table tr:hover {
+  background: var(--bg);
+}
+
+.current-user-row {
+  background: var(--primary-light) !important;
+  font-weight: 600;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.col-position {
+  width: 60px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+/* Leaderboard Page */
+.leaderboard-filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-xl);
+}
+.current-user-card {
+  background: linear-gradient(
+    135deg,
+    var(--primary-light) 0%,
+    var(--secondary-light) 100%
+  );
+  margin-bottom: var(--spacing-xl);
+}
+.current-user-position {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xl);
+  margin-top: var(--spacing-lg);
+}
+.position-rank {
+  text-align: center;
+}
+.rank-number {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--primary);
+  display: block;
+}
+.rank-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.position-details {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex: 1;
+}
+.position-info h4 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text);
+}
+.position-stats {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+.podium {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-lg);
+  align-items: end;
+  margin-bottom: var(--spacing-2xl);
+}
+.podium-card {
+  text-align: center;
+  padding: var(--spacing-xl);
+  position: relative;
+}
+.podium-first {
+  order: 2;
+  transform: scale(1.1);
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+.podium-second {
+  order: 1;
+}
+.podium-third {
+  order: 3;
+}
+.podium-medal {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+.podium-card h4 {
+  margin: var(--spacing-md) 0;
+  font-size: 1.125rem;
+}
+.podium-crown {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+}

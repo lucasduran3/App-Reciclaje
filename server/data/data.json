@@ -188,14 +188,14 @@
       "interactions": {
         "likes": 5,
         "comments": 3,
-        "views": 26,
+        "views": 28,
         "likedBy": [
           "user-002",
           "user-003"
         ]
       },
       "createdAt": "2025-10-13T09:30:00.000Z",
-      "updatedAt": "2025-10-21T01:43:15.709Z",
+      "updatedAt": "2025-10-21T22:27:16.462Z",
       "acceptedAt": null,
       "completedAt": null
     },
@@ -233,14 +233,14 @@
       "interactions": {
         "likes": 12,
         "comments": 4,
-        "views": 45,
+        "views": 47,
         "likedBy": [
           "user-001",
           "user-003"
         ]
       },
       "createdAt": "2025-10-12T14:20:00.000Z",
-      "updatedAt": "2025-10-13T08:15:00.000Z",
+      "updatedAt": "2025-10-21T22:27:06.543Z",
       "acceptedAt": "2025-10-13T08:15:00.000Z",
       "completedAt": null
     },
@@ -330,7 +330,7 @@
       "interactions": {
         "likes": 34,
         "comments": 12,
-        "views": 98,
+        "views": 100,
         "likedBy": [
           "user-001",
           "user-002",
@@ -338,7 +338,7 @@
         ]
       },
       "createdAt": "2025-10-10T08:00:00.000Z",
-      "updatedAt": "2025-10-12T16:45:00.000Z",
+      "updatedAt": "2025-10-21T18:38:42.640Z",
       "acceptedAt": "2025-10-10T10:30:00.000Z",
       "completedAt": "2025-10-12T16:45:00.000Z"
     },
@@ -758,7 +758,7 @@
     }
   ],
   "metadata": {
-    "lastUpdated": "2025-10-21T01:44:37.176Z",
+    "lastUpdated": "2025-10-21T22:27:16.462Z",
     "version": "1.0.0",
     "totalUsers": 4,
     "totalTickets": 5,
