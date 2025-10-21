@@ -115,7 +115,7 @@ export default function TicketDetail() {
           <Icon icon="fluent-color:error-circle-48" className="empty-icon" width={64} />
           <h3>Error al cargar el ticket</h3>
           <p>{error || 'Ticket no encontrado'}</p>
-          <Button variant="primary" onClick={() => navigate('/tickets')}>
+          <Button variant="primary" onClick={() => navigate('/feed')}>
             Volver a tickets
           </Button>
         </div>
