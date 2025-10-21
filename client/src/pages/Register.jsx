@@ -3,10 +3,10 @@
  * Ubicación: client/src/pages/Register.jsx
  */
 
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
-import authService from '../services/authService';
+import { useAuth } from "../context/AuthContext";
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -18,6 +18,7 @@ const CITIES = [
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     role: 'user',
     name: '',
@@ -123,7 +124,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await authService.register(formData);
+      await register(formData);
       navigate('/');
     } catch (error) {
       const errorMessage = error.message || 'Error al crear la cuenta';

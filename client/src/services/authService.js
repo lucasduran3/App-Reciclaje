@@ -1,124 +1,205 @@
 /**
- * Auth Service - Servicio de autenticación cliente
- * Ubicación: client/src/services/authService.js
+ * Auth Service - Servicio de autenticación cliente con Supabase
  */
 
-import apiClient from './apiClient';
-
-const TOKEN_KEY = 'eco_game_token';
-const USER_KEY = 'eco_game_user';
+import supabase from '../config/supabase';
 
 class AuthService {
   /**
    * Registra nuevo usuario
    */
   async register(userData) {
-    const response = await apiClient.request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
+    try {
+      // 1. Crear usuario en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            username: userData.username,
+            name: userData.name,
+            last_name: userData.lastName || '',
+            role: userData.role || 'user'
+          }
+        }
+      });
 
-    if (response.success) {
-      this.setToken(response.data.token);
-      this.setUser(response.data.user);
+      if (authError) throw authError;
+
+      // 2. Actualizar campos adicionales en el perfil
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            city: userData.city,
+            neighborhood: userData.neighborhood,
+            zone: `${userData.city} - ${userData.neighborhood}`
+          })
+          .eq('id', authData.user.id);
+
+        if (profileError) throw profileError;
+      }
+
+      return {
+        success: true,
+        data: {
+          user: authData.user,
+          session: authData.session
+        }
+      };
+    } catch (error) {
+      console.error('Register error:', error);
+      throw new Error(error.message || 'Error al crear la cuenta');
     }
-
-    return response;
   }
 
   /**
    * Login de usuario
    */
   async login(identifier, password) {
-    const response = await apiClient.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ identifier, password })
-    });
+    try {
+      // Supabase solo acepta email para login
+      // Si el identifier no es un email, buscar el email por username
+      let email = identifier;
 
-    if (response.success) {
-      this.setToken(response.data.token);
-      this.setUser(response.data.user);
+      if (!identifier.includes('@')) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', identifier)
+          .single();
+
+        if (profileError || !profile) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        // Obtener el email del auth.users
+        const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profile.id);
+        
+        if (userError || !user) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        email = user.email;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: {
+          user: data.user,
+          session: data.session
+        }
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Credenciales inválidas');
     }
-
-    return response;
   }
 
   /**
    * Cierra sesión
    */
   async logout() {
-    await apiClient.request('/auth/logout', {
-      method: 'POST'
-    });
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
 
-    this.clearAuth();
+      return { success: true };
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
   }
 
   /**
    * Obtiene usuario actual
    */
   async getCurrentUser() {
-    const token = this.getToken();
-    
-    if (!token) {
-      throw new Error('No token found');
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) throw error;
+      if (!user) return null;
+
+      // Obtener perfil completo
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      return profile;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return null;
     }
+  }
 
-    const response = await apiClient.request('/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (response.success) {
-      this.setUser(response.data);
+  /**
+   * Obtiene sesión actual
+   */
+  async getSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (error) {
+      console.error('Get session error:', error);
+      return null;
     }
-
-    return response.data;
-  }
-
-  /**
-   * Guarda token en localStorage
-   */
-  setToken(token) {
-    localStorage.setItem(TOKEN_KEY, token);
-  }
-
-  /**
-   * Obtiene token de localStorage
-   */
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  /**
-   * Guarda usuario en localStorage
-   */
-  setUser(user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  }
-
-  /**
-   * Obtiene usuario de localStorage
-   */
-  getUser() {
-    const user = localStorage.getItem(USER_KEY);
-    return user ? JSON.parse(user) : null;
   }
 
   /**
    * Verifica si hay sesión activa
    */
-  isAuthenticated() {
-    return !!this.getToken();
+  async isAuthenticated() {
+    const session = await this.getSession();
+    return !!session;
   }
 
   /**
-   * Limpia datos de autenticación
+   * Actualiza contraseña
    */
-  clearAuth() {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  async updatePassword(newPassword) {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error) {
+      console.error('Update password error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Solicita reset de contraseña
+   */
+  async resetPassword(email) {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw error;
+    }
   }
 
   /**
