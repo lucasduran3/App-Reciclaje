@@ -2,8 +2,8 @@
  * AuthContext - Manejo del usuario actual con Supabase Auth
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import supabase from '../config/supabase';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import supabase from "../config/supabase";
 
 const AuthContext = createContext();
 
@@ -17,20 +17,20 @@ export function AuthProvider({ children }) {
     initializeAuth();
 
     // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-        setSession(session);
-        
-        if (session?.user) {
-          await loadUserProfile(session.user.id);
-        } else {
-          setCurrentUser(null);
-        }
-        
-        setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
+      setSession(session);
+
+      if (session?.user) {
+        await loadUserProfile(session.user.id);
+      } else {
+        setCurrentUser(null);
       }
-    );
+
+      setLoading(false);
+    });
 
     // Cleanup
     return () => {
@@ -43,8 +43,11 @@ export function AuthProvider({ children }) {
    */
   const initializeAuth = async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
       if (error) throw error;
 
       setSession(session);
@@ -53,7 +56,7 @@ export function AuthProvider({ children }) {
         await loadUserProfile(session.user.id);
       }
     } catch (error) {
-      console.error('Error initializing auth:', error);
+      console.error("Error initializing auth:", error);
     } finally {
       setLoading(false);
     }
@@ -65,16 +68,16 @@ export function AuthProvider({ children }) {
   const loadUserProfile = async (userId) => {
     try {
       const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error) throw error;
 
       setCurrentUser(profile);
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error("Error loading user profile:", error);
       setCurrentUser(null);
     }
   };
@@ -92,10 +95,16 @@ export function AuthProvider({ children }) {
           data: {
             username: userData.username,
             name: userData.name,
-            last_name: userData.lastName || '',
-            role: userData.role || 'user'
-          }
-        }
+            last_name: userData.lastName || "",
+            role: userData.role || "user",
+            city: userData.city || "",
+            neighborhood: userData.neighborhood || "",
+            avatar_url: 'https://api.dicebear.com/9.x/avataaars/svg?seed=maria'
+          },
+          options: {
+            emailRedirectTo: "http://localhost:5173/login",
+          },
+        },
       });
 
       if (authError) throw authError;
@@ -104,13 +113,12 @@ export function AuthProvider({ children }) {
       // pero podemos actualizar campos adicionales si es necesario
       if (authData.user) {
         const { error: profileError } = await supabase
-          .from('profiles')
+          .from("profiles")
           .update({
             city: userData.city,
             neighborhood: userData.neighborhood,
-            zone: `${userData.city} - ${userData.neighborhood}`
           })
-          .eq('id', authData.user.id);
+          .eq("id", authData.user.id);
 
         if (profileError) throw profileError;
 
@@ -120,7 +128,7 @@ export function AuthProvider({ children }) {
 
       return { success: true, user: authData.user };
     } catch (error) {
-      console.error('Error registering:', error);
+      console.error("Error registering:", error);
       throw error;
     }
   };
@@ -132,7 +140,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
       if (error) throw error;
@@ -140,7 +148,7 @@ export function AuthProvider({ children }) {
       // El perfil se carga automáticamente por onAuthStateChange
       return { success: true, user: data.user };
     } catch (error) {
-      console.error('Error logging in:', error);
+      console.error("Error logging in:", error);
       throw error;
     }
   };
@@ -156,7 +164,7 @@ export function AuthProvider({ children }) {
       setCurrentUser(null);
       setSession(null);
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
       throw error;
     }
   };
@@ -178,9 +186,9 @@ export function AuthProvider({ children }) {
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updates)
-        .eq('id', currentUser.id)
+        .eq("id", currentUser.id)
         .select()
         .single();
 
@@ -189,7 +197,7 @@ export function AuthProvider({ children }) {
       setCurrentUser(data);
       return data;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       throw error;
     }
   };
@@ -203,7 +211,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     refreshUser,
-    updateProfile
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -212,7 +220,7 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }

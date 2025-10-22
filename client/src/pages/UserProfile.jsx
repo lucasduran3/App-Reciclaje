@@ -38,7 +38,7 @@ export default function UserProfile() {
             badge={currentUser.level}
           />
           <div className="profile-info">
-            <h1 className="profile-name">{currentUser.name}</h1>
+            <h1 className="profile-name">{currentUser.name} {currentUser.last_name}</h1>
             <p className="profile-email">{currentUser.email}</p>
             <div className="profile-badges-preview">
               <Badge variant="primary" icon={<Icon icon="fluent-color:star-48"></Icon>}>

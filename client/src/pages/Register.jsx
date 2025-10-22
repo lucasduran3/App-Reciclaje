@@ -218,7 +218,6 @@ export default function Register() {
                   onChange={handleChange}
                   style={{ marginRight: 'var(--spacing-sm)' }}
                 />
-                <Icon icon="fluent-color:person-24" width="20" style={{ verticalAlign: 'middle' }} />
                 {' '}Usuario
               </label>
               <label style={{

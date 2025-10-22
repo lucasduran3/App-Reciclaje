@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import fileService from '../services/fileService.js';
+import supabaseService from '../services/supabaseService.js';
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const comments = fileService.getCollection('comments');
+    const comments = supabaseService.getAll('comments');
     
     res.json({
       success: true,
@@ -33,7 +33,7 @@ router.get('/', async (req, res, next) => {
 router.get('/ticket/:ticketId', async (req, res, next) => {
   try {
     const { ticketId } = req.params;
-    const comments = fileService.getCollection('comments');
+    const comments = supabaseService.getAll('comments');
     const ticketComments = comments.filter(c => c.ticketId === ticketId);
     
     res.json({

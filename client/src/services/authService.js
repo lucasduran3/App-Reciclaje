@@ -11,6 +11,7 @@ class AuthService {
   async register(userData) {
     try {
       // 1. Crear usuario en Supabase Auth
+      console.log(`lastname: ${userData.lastName} ciudad: ${userData.city}`);
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -19,7 +20,10 @@ class AuthService {
             username: userData.username,
             name: userData.name,
             last_name: userData.lastName || '',
-            role: userData.role || 'user'
+            role: userData.role || 'user',
+            city: userData.city,
+            neighborhood: userData.neighborhood,
+            avatar_url: 'https://api.dicebear.com/9.x/avataaars/svg?seed=maria'
           }
         }
       });
@@ -32,8 +36,7 @@ class AuthService {
           .from('profiles')
           .update({
             city: userData.city,
-            neighborhood: userData.neighborhood,
-            zone: `${userData.city} - ${userData.neighborhood}`
+            neighborhood: userData.neighborhood
           })
           .eq('id', authData.user.id);
 

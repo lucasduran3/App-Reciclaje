@@ -22,14 +22,14 @@ export default function ProgressBar({
         <div className="progress-label">
           <span>{label}</span>
           {showPercentage && (
-            <span className="progress-percentage">{percentage}%</span>
+            <span className="progress-percentage">{percentage || 0}%</span>
           )}
         </div>
       )}
       <div className={`progress ${sizeClasses[size]}`}>
         <div 
           className={`progress-bar progress-bar-${variant}`}
-          style={{ width: `${percentage}%` }}
+          style={{ width: `${percentage || 0}%` }}
         >
           <span className="progress-text">{current}/{max}</span>
         </div>
