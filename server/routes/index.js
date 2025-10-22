@@ -3,7 +3,6 @@
  */
 
 import express from "express";
-import dataRoutes from "./dataRoutes.js";
 import userRoutes from "./userRoutes.js";
 import ticketRoutes from "./ticketRoutes.js";
 import missionRoutes from "./missionRoutes.js";
@@ -14,7 +13,6 @@ import authRoutes from "./authRoutes.js";
 const router = express.Router();
 
 // Montar rutas
-router.use("/data", dataRoutes);
 router.use("/users", userRoutes);
 router.use("/tickets", ticketRoutes);
 router.use("/missions", missionRoutes);
@@ -40,15 +38,6 @@ router.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       health: "GET /api/health",
-      data: {
-        getAll: "GET /api/data",
-        save: "POST /api/data",
-        reset: "POST /api/data/reset",
-        backup: "POST /api/data/backup",
-        metadata: "GET /api/data/metadata",
-        collection: "GET /api/data/:collection",
-        updateCollection: "PUT /api/data/:collection",
-      },
       users: {
         getAll: "GET /api/users",
         getById: "GET /api/users/:id",
