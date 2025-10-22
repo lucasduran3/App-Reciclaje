@@ -1,9 +1,8 @@
 /**
- * Mission Controller - Controlador de misiones
+ * Mission Controller - Controlador de misiones con Supabase
  */
 
-import fileService from "../services/fileService.js";
-import { generateId } from "../utils/idGenerator.js";
+import supabaseService from '../services/supabaseService.js';
 
 class MissionController {
   /**
@@ -12,23 +11,16 @@ class MissionController {
    */
   async getAll(req, res, next) {
     try {
-      let missions = fileService.getCollection("missions");
-
-      // Filtros
       const { type, category, completed } = req.query;
 
-      if (type) {
-        missions = missions.filter((m) => m.type === type);
-      }
+      let missions = await supabaseService.query('missions', (query) => {
+        let q = query.order('created_at', { ascending: false });
 
-      if (category) {
-        missions = missions.filter((m) => m.category === category);
-      }
+        if (type) q = q.eq('type', type);
+        if (category) q = q.eq('category', category);
 
-      if (completed !== undefined) {
-        const isCompleted = completed === "true";
-        missions = missions.filter((m) => m.completed === isCompleted);
-      }
+        return q;
+      });
 
       res.json({
         success: true,
@@ -47,12 +39,12 @@ class MissionController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const mission = fileService.findById("missions", id);
+      const mission = await supabaseService.getById('missions', id);
 
       if (!mission) {
         return res.status(404).json({
           success: false,
-          error: "Mission not found",
+          error: 'Mission not found',
         });
       }
 
@@ -74,29 +66,19 @@ class MissionController {
       const { id } = req.params;
       const updates = req.body;
 
-      const mission = fileService.findById("missions", id);
+      const mission = await supabaseService.getById('missions', id);
       if (!mission) {
         return res.status(404).json({
           success: false,
-          error: "Mission not found",
+          error: 'Mission not found',
         });
       }
 
-      // Si se actualiza progreso y alcanza el goal, marcar como completada
-      if (updates.progress !== undefined && updates.progress >= mission.goal) {
-        updates.completed = true;
-        updates.completedAt = new Date().toISOString();
-      }
-
-      const updatedMission = await fileService.updateInCollection(
-        "missions",
-        id,
-        updates
-      );
+      const updatedMission = await supabaseService.update('missions', id, updates);
 
       res.json({
         success: true,
-        message: "Mission updated successfully",
+        message: 'Mission updated successfully',
         data: updatedMission,
       });
     } catch (error) {
@@ -106,48 +88,66 @@ class MissionController {
 
   /**
    * POST /api/missions/:id/increment
-   * Incrementa el progreso de una misión
+   * Incrementa el progreso de una misión para un usuario
    */
   async incrementProgress(req, res, next) {
     try {
       const { id } = req.params;
       const { userId, amount = 1 } = req.body;
 
-      const mission = fileService.findById("missions", id);
+      const mission = await supabaseService.getById('missions', id);
       if (!mission) {
         return res.status(404).json({
           success: false,
-          error: "Mission not found",
+          error: 'Mission not found',
         });
       }
 
-      if (mission.completed) {
+      // Buscar el progreso del usuario para esta misión
+      const userMissions = await supabaseService.query('user_missions', (query) =>
+        query.eq('user_id', userId).eq('mission_id', id).single()
+      );
+
+      let userMission = userMissions[0];
+
+      if (!userMission) {
+        // Crear nuevo registro de progreso
+        userMission = await supabaseService.create('user_missions', {
+          user_id: userId,
+          mission_id: id,
+          progress: 0,
+          completed: false,
+        });
+      }
+
+      if (userMission.completed) {
         return res.status(400).json({
           success: false,
-          error: "Mission is already completed",
+          error: 'Mission is already completed',
         });
       }
 
       // Incrementar progreso
-      const newProgress = mission.progress + amount;
+      const newProgress = userMission.progress + amount;
       const updates = { progress: newProgress };
 
       // Si alcanza el goal, completar y dar puntos
       if (newProgress >= mission.goal) {
         updates.completed = true;
-        updates.completedAt = new Date().toISOString();
+        updates.completed_at = new Date().toISOString();
 
         // Dar puntos al usuario
         if (userId) {
-          const user = fileService.findById("users", userId);
+          const user = await supabaseService.getById('profiles', userId);
           if (user) {
-            user.stats.missionsCompleted++;
-            await fileService.updateInCollection("users", userId, {
-              stats: user.stats,
+            const userStats = user.stats || {};
+            userStats.missions_completed = (userStats.missions_completed || 0) + 1;
+            
+            await supabaseService.update('profiles', userId, {
+              stats: userStats,
             });
 
-            const userController = (await import("./userController.js"))
-              .default;
+            const userController = (await import('./userController.js')).default;
             await userController.addPoints(
               {
                 params: { id: userId },
@@ -163,16 +163,19 @@ class MissionController {
         }
       }
 
-      const updatedMission = await fileService.updateInCollection(
-        "missions",
-        id,
+      const updatedUserMission = await supabaseService.update(
+        'user_missions',
+        userMission.id,
         updates
       );
 
       res.json({
         success: true,
-        message: updates.completed ? "Mission completed!" : "Progress updated",
-        data: updatedMission,
+        message: updates.completed ? 'Mission completed!' : 'Progress updated',
+        data: {
+          mission,
+          userProgress: updatedUserMission,
+        },
       });
     } catch (error) {
       next(error);
@@ -185,114 +188,111 @@ class MissionController {
    */
   async regenerate(req, res, next) {
     try {
-      const { type } = req.body; // 'daily' o 'weekly'
+      const { type } = req.body;
 
-      if (!["daily", "weekly"].includes(type)) {
+      if (!['daily', 'weekly'].includes(type)) {
         return res.status(400).json({
           success: false,
           error: 'Type must be "daily" or "weekly"',
         });
       }
 
-      const missions = fileService.getCollection("missions");
-
-      // Eliminar misiones del tipo especificado que no estén completadas
-      const filteredMissions = missions.filter(
-        (m) => m.type !== type || m.completed
-      );
-
       // Templates de misiones
       const dailyTemplates = [
         {
-          title: "Reportar un punto sucio",
-          description:
-            "Encuentra y reporta un lugar que necesite limpieza en tu zona",
-          icon: "fluent-color:megaphone-loud-32",
-          type: "daily",
-          category: "reporter",
+          title: 'Reportar un punto sucio',
+          description: 'Encuentra y reporta un lugar que necesite limpieza en tu zona',
+          icon: 'fluent-color:megaphone-loud-32',
+          type: 'daily',
+          category: 'reporter',
           points: 50,
           goal: 1,
           requirements: { minPhotos: 1, mustHaveLocation: true },
         },
         {
-          title: "Acepta un reto de limpieza",
-          description: "Acepta al menos un ticket reportado por otro usuario",
-          icon: "fluent-color:circle-multiple-hint-checkmark-48",
-          type: "daily",
-          category: "cleaner",
+          title: 'Acepta un reto de limpieza',
+          description: 'Acepta al menos un ticket reportado por otro usuario',
+          icon: 'fluent-color:circle-multiple-hint-checkmark-48',
+          type: 'daily',
+          category: 'cleaner',
           points: 30,
           goal: 1,
           requirements: { mustBeOthersTicket: true },
         },
         {
-          title: "Valida una limpieza",
-          description: "Valida un ticket que hayas reportado y fue limpiado",
-          icon: "fluent-color:checkmark-circle-48",
-          type: "daily",
-          category: "validator",
+          title: 'Valida una limpieza',
+          description: 'Valida un ticket que hayas reportado y fue limpiado',
+          icon: 'fluent-color:checkmark-circle-48',
+          type: 'daily',
+          category: 'validator',
           points: 40,
           goal: 1,
-          requirements: { mustBeOwnTicket: true, ticketStatus: "validating" },
+          requirements: { mustBeOwnTicket: true, ticketStatus: 'validating' },
         },
       ];
 
       const weeklyTemplates = [
         {
-          title: "Limpiador Semanal",
-          description: "Completa la limpieza de 5 tickets esta semana",
-          icon: "fluent-emoji-flat:broom",
-          type: "weekly",
-          category: "cleaner",
+          title: 'Limpiador Semanal',
+          description: 'Completa la limpieza de 5 tickets esta semana',
+          icon: 'fluent-emoji-flat:broom',
+          type: 'weekly',
+          category: 'cleaner',
           points: 300,
           goal: 5,
-          requirements: { cleaningStatus: "complete" },
+          requirements: { cleaningStatus: 'complete' },
         },
         {
-          title: "Explorador Urbano",
-          description: "Reporta 10 puntos sucios en diferentes zonas",
-          icon: "fluent-color:search-sparkle-48",
-          type: "weekly",
-          category: "reporter",
+          title: 'Explorador Urbano',
+          description: 'Reporta 10 puntos sucios en diferentes zonas',
+          icon: 'fluent-color:search-sparkle-48',
+          type: 'weekly',
+          category: 'reporter',
           points: 250,
           goal: 10,
           requirements: { uniqueZones: 3 },
         },
         {
-          title: "Comunidad Activa",
-          description: "Da 20 likes y comenta en 5 tickets de otros usuarios",
-          icon: "fluent-color:comment-48",
-          type: "weekly",
-          category: "social",
+          title: 'Comunidad Activa',
+          description: 'Da 20 likes y comenta en 5 tickets de otros usuarios',
+          icon: 'fluent-color:comment-48',
+          type: 'weekly',
+          category: 'social',
           points: 100,
           goal: 25,
           requirements: { likes: 20, comments: 5 },
         },
       ];
 
-      const templates = type === "daily" ? dailyTemplates : weeklyTemplates;
+      const templates = type === 'daily' ? dailyTemplates : weeklyTemplates;
 
       // Calcular fecha de expiración
       const expiresAt = new Date();
-      if (type === "daily") {
+      if (type === 'daily') {
         expiresAt.setDate(expiresAt.getDate() + 1);
       } else {
         expiresAt.setDate(expiresAt.getDate() + 7);
       }
       expiresAt.setHours(3, 0, 0, 0);
 
-      // Crear nuevas misiones
-      const newMissions = templates.map((template) => ({
-        ...template,
-        id: generateId("mission"),
-        progress: 0,
-        completed: false,
-        expiresAt: expiresAt.toISOString(),
-        createdAt: new Date().toISOString(),
-      }));
+      // Eliminar misiones viejas del mismo tipo
+      const oldMissions = await supabaseService.query('missions', (query) =>
+        query.eq('type', type)
+      );
 
-      // Agregar nuevas misiones
-      const allMissions = [...filteredMissions, ...newMissions];
-      await fileService.updateCollection("missions", allMissions);
+      for (const oldMission of oldMissions) {
+        await supabaseService.delete('missions', oldMission.id);
+      }
+
+      // Crear nuevas misiones
+      const newMissions = [];
+      for (const template of templates) {
+        const mission = await supabaseService.create('missions', {
+          ...template,
+          expires_at: expiresAt.toISOString(),
+        });
+        newMissions.push(mission);
+      }
 
       res.json({
         success: true,

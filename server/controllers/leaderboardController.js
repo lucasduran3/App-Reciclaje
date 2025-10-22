@@ -1,8 +1,8 @@
 /**
- * Leaderboard Controller - Controlador de rankings
+ * Leaderboard Controller - Controlador de rankings con Supabase
  */
 
-import fileService from '../services/fileService.js';
+import supabaseService from '../services/supabaseService.js';
 
 class LeaderboardController {
   /**
@@ -13,34 +13,32 @@ class LeaderboardController {
     try {
       const { zone, limit = 100 } = req.query;
 
-      // Obtener usuarios
-      const users = fileService.getCollection('users');
+      // Obtener usuarios con perfiles públicos, ordenados por puntos
+      let users = await supabaseService.query('profiles', (query) => {
+        let q = query
+          .eq('preferences->>public_profile', 'true')
+          .order('points', { ascending: false })
+          .limit(parseInt(limit));
 
-      // Filtrar solo perfiles públicos
-      let leaderboard = users
-        .filter(u => u.preferences.publicProfile)
-        .map(user => ({
-          userId: user.id,
-          name: user.name,
-          avatar: user.avatar,
-          points: user.points,
-          zone: user.zone,
-          level: user.level,
-          streak: user.streak,
-          badges: user.badges,
-          weeklyPoints: this.calculateWeeklyPoints(user.id),
-        }))
-        .sort((a, b) => b.points - a.points);
+        if (zone) {
+          q = q.eq('zone', zone);
+        }
 
-      // Filtrar por zona si se especifica
-      if (zone) {
-        leaderboard = leaderboard.filter(entry => entry.zone === zone);
-      }
+        return q;
+      });
 
-      // Agregar posición
-      leaderboard = leaderboard.slice(0, parseInt(limit)).map((entry, index) => ({
-        ...entry,
+      // Construir leaderboard con posiciones
+      const leaderboard = users.map((user, index) => ({
+        userId: user.id,
+        name: user.name,
+        avatar: user.avatar_url,
+        points: user.points,
+        zone: user.zone,
+        level: user.level,
+        streak: user.streak,
+        badges: user.badges,
         position: index + 1,
+        weeklyPoints: 0, // Calcular si es necesario
       }));
 
       res.json({
@@ -64,7 +62,7 @@ class LeaderboardController {
       const { id } = req.params;
       const { zone } = req.query;
 
-      const user = fileService.findById('users', id);
+      const user = await supabaseService.getById('profiles', id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -73,18 +71,20 @@ class LeaderboardController {
       }
 
       // Generar leaderboard completo
-      const users = fileService.getCollection('users');
-      let leaderboard = users
-        .filter(u => u.preferences.publicProfile)
-        .sort((a, b) => b.points - a.points);
+      let users = await supabaseService.query('profiles', (query) => {
+        let q = query
+          .eq('preferences->>public_profile', 'true')
+          .order('points', { ascending: false });
 
-      // Filtrar por zona si se especifica
-      if (zone) {
-        leaderboard = leaderboard.filter(u => u.zone === zone);
-      }
+        if (zone) {
+          q = q.eq('zone', zone);
+        }
+
+        return q;
+      });
 
       // Encontrar posición
-      const position = leaderboard.findIndex(u => u.id === id) + 1;
+      const position = users.findIndex((u) => u.id === id) + 1;
 
       if (position === 0) {
         return res.status(404).json({
@@ -98,14 +98,14 @@ class LeaderboardController {
         data: {
           userId: user.id,
           name: user.name,
-          avatar: user.avatar,
+          avatar: user.avatar_url,
           points: user.points,
           zone: user.zone,
           level: user.level,
           streak: user.streak,
           position,
-          totalPlayers: leaderboard.length,
-          weeklyPoints: this.calculateWeeklyPoints(user.id),
+          totalPlayers: users.length,
+          weeklyPoints: 0, // Calcular si es necesario
         },
       });
     } catch (error) {
@@ -115,76 +115,39 @@ class LeaderboardController {
 
   /**
    * POST /api/leaderboard/regenerate
-   * Regenera el leaderboard (actualiza cache)
+   * Regenera el leaderboard (no es necesario con Supabase, solo retorna datos actuales)
    */
   async regenerate(req, res, next) {
     try {
-      const users = fileService.getCollection('users');
+      // En Supabase no necesitamos regenerar, solo devolvemos el leaderboard actual
+      const users = await supabaseService.query('profiles', (query) =>
+        query
+          .eq('preferences->>public_profile', 'true')
+          .order('points', { ascending: false })
+      );
 
-      const leaderboard = users
-        .filter(u => u.preferences.publicProfile)
-        .map(user => ({
-          userId: user.id,
-          name: user.name,
-          avatar: user.avatar,
-          points: user.points,
-          zone: user.zone,
-          level: user.level,
-          streak: user.streak,
-          badges: user.badges,
-          weeklyPoints: this.calculateWeeklyPoints(user.id),
-        }))
-        .sort((a, b) => b.points - a.points)
-        .map((entry, index) => ({
-          ...entry,
-          position: index + 1,
-        }));
-
-      // Guardar en colección
-      await fileService.updateCollection('leaderboard', leaderboard);
+      const leaderboard = users.map((user, index) => ({
+        userId: user.id,
+        name: user.name,
+        avatar: user.avatar_url,
+        points: user.points,
+        zone: user.zone,
+        level: user.level,
+        streak: user.streak,
+        badges: user.badges,
+        position: index + 1,
+        weeklyPoints: 0,
+      }));
 
       res.json({
         success: true,
-        message: 'Leaderboard regenerated successfully',
+        message: 'Leaderboard data retrieved successfully',
         count: leaderboard.length,
         data: leaderboard,
       });
     } catch (error) {
       next(error);
     }
-  }
-
-  /**
-   * Calcula puntos ganados en la última semana
-   * @private
-   */
-  calculateWeeklyPoints(userId) {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    const tickets = fileService.getCollection('tickets');
-    
-    let weeklyPoints = 0;
-
-    tickets.forEach(ticket => {
-      const completedDate = ticket.completedAt ? new Date(ticket.completedAt) : null;
-      
-      if (completedDate && completedDate >= oneWeekAgo) {
-        if (ticket.pointsAwarded) {
-          if (ticket.reportedBy === userId) {
-            weeklyPoints += ticket.pointsAwarded.reporter;
-          }
-          if (ticket.acceptedBy === userId) {
-            weeklyPoints += ticket.pointsAwarded.cleaner;
-          }
-          if (ticket.validatedBy === userId) {
-            weeklyPoints += ticket.pointsAwarded.validator;
-          }
-        }
-      }
-    });
-
-    return weeklyPoints;
   }
 }
 

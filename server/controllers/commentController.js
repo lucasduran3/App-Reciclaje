@@ -1,10 +1,8 @@
 /**
- * Comment Controller - Controlador de comentarios
+ * Comment Controller - Controlador de comentarios con Supabase
  */
 
-import fileService from '../services/fileService.js';
-import { validateComment } from '../services/validationService.js';
-import { generateId } from '../utils/idGenerator.js';
+import supabaseService from '../services/supabaseService.js';
 
 class CommentController {
   /**
@@ -13,18 +11,16 @@ class CommentController {
    */
   async getAll(req, res, next) {
     try {
-      let comments = fileService.getCollection('comments');
-
-      // Filtros
       const { ticketId, userId } = req.query;
 
-      if (ticketId) {
-        comments = comments.filter(c => c.ticketId === ticketId);
-      }
+      let comments = await supabaseService.query('comments', (query) => {
+        let q = query.order('created_at', { ascending: true });
 
-      if (userId) {
-        comments = comments.filter(c => c.userId === userId);
-      }
+        if (ticketId) q = q.eq('ticket_id', ticketId);
+        if (userId) q = q.eq('user_id', userId);
+
+        return q;
+      });
 
       res.json({
         success: true,
@@ -43,7 +39,7 @@ class CommentController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const comment = fileService.findById('comments', id);
+      const comment = await supabaseService.getById('comments', id);
 
       if (!comment) {
         return res.status(404).json({
@@ -70,16 +66,22 @@ class CommentController {
       const commentData = req.body;
 
       // Validar datos
-      const validation = validateComment(commentData);
-      if (!validation.valid) {
+      if (!commentData.content || commentData.content.trim().length === 0) {
         return res.status(400).json({
           success: false,
-          errors: validation.errors,
+          error: 'Content cannot be empty',
+        });
+      }
+
+      if (commentData.content.length > 500) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content must be less than 500 characters',
         });
       }
 
       // Verificar que ticket y usuario existen
-      const ticket = fileService.findById('tickets', commentData.ticketId);
+      const ticket = await supabaseService.getById('tickets', commentData.ticket_id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -87,7 +89,7 @@ class CommentController {
         });
       }
 
-      const user = fileService.findById('users', commentData.userId);
+      const user = await supabaseService.getById('profiles', commentData.user_id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -97,35 +99,32 @@ class CommentController {
 
       // Crear comentario
       const newComment = {
-        id: generateId('comment'),
-        ticketId: commentData.ticketId,
-        userId: commentData.userId,
-        userName: user.name,
-        userAvatar: user.avatar,
+        ticket_id: commentData.ticket_id,
+        user_id: commentData.user_id,
         content: commentData.content.trim(),
-        likes: 0,
-        likedBy: [],
-        createdAt: new Date().toISOString(),
       };
 
-      await fileService.addToCollection('comments', newComment);
+      const createdComment = await supabaseService.create('comments', newComment);
 
       // Actualizar contador de comentarios en ticket
-      ticket.interactions.comments++;
-      await fileService.updateInCollection('tickets', ticket.id, {
-        interactions: ticket.interactions,
-      });
+      const interactions = ticket.interactions || { likes: 0, views: 0, comments: 0, liked_by: [] };
+      interactions.comments = (interactions.comments || 0) + 1;
+      
+      await supabaseService.update('tickets', ticket.id, { interactions });
 
       // Actualizar stats del usuario
-      user.stats.commentsGiven++;
-      await fileService.updateInCollection('users', user.id, { stats: user.stats });
+      const userStats = user.stats || {};
+      userStats.comments_given = (userStats.comments_given || 0) + 1;
+      await supabaseService.update('profiles', user.id, { stats: userStats });
 
       // Dar puntos al dueño del ticket
-      const reporter = fileService.findById('users', ticket.reportedBy);
+      const reporter = await supabaseService.getById('profiles', ticket.reported_by);
       if (reporter && reporter.id !== user.id) {
-        reporter.stats.commentsReceived++;
-        await fileService.updateInCollection('users', reporter.id, {
-          stats: reporter.stats,
+        const reporterStats = reporter.stats || {};
+        reporterStats.comments_received = (reporterStats.comments_received || 0) + 1;
+        
+        await supabaseService.update('profiles', reporter.id, {
+          stats: reporterStats,
           points: reporter.points + 10,
         });
       }
@@ -133,7 +132,7 @@ class CommentController {
       res.status(201).json({
         success: true,
         message: 'Comment created successfully',
-        data: newComment,
+        data: createdComment,
       });
     } catch (error) {
       next(error);
@@ -149,7 +148,7 @@ class CommentController {
       const { id } = req.params;
       const { content, userId } = req.body;
 
-      const comment = fileService.findById('comments', id);
+      const comment = await supabaseService.getById('comments', id);
       if (!comment) {
         return res.status(404).json({
           success: false,
@@ -158,7 +157,7 @@ class CommentController {
       }
 
       // Verificar que el usuario es el autor
-      if (comment.userId !== userId) {
+      if (comment.user_id !== userId) {
         return res.status(403).json({
           success: false,
           error: 'You can only edit your own comments',
@@ -172,9 +171,8 @@ class CommentController {
         });
       }
 
-      const updatedComment = await fileService.updateInCollection('comments', id, {
+      const updatedComment = await supabaseService.update('comments', id, {
         content: content.trim(),
-        updatedAt: new Date().toISOString(),
       });
 
       res.json({
@@ -196,7 +194,7 @@ class CommentController {
       const { id } = req.params;
       const { userId } = req.body;
 
-      const comment = fileService.findById('comments', id);
+      const comment = await supabaseService.getById('comments', id);
       if (!comment) {
         return res.status(404).json({
           success: false,
@@ -205,7 +203,7 @@ class CommentController {
       }
 
       // Verificar que el usuario es el autor
-      if (comment.userId !== userId) {
+      if (comment.user_id !== userId) {
         return res.status(403).json({
           success: false,
           error: 'You can only delete your own comments',
@@ -213,70 +211,19 @@ class CommentController {
       }
 
       // Actualizar contador en ticket
-      const ticket = fileService.findById('tickets', comment.ticketId);
+      const ticket = await supabaseService.getById('tickets', comment.ticket_id);
       if (ticket) {
-        ticket.interactions.comments--;
-        await fileService.updateInCollection('tickets', ticket.id, {
-          interactions: ticket.interactions,
-        });
+        const interactions = ticket.interactions || { likes: 0, views: 0, comments: 0, liked_by: [] };
+        interactions.comments = Math.max(0, (interactions.comments || 0) - 1);
+        
+        await supabaseService.update('tickets', ticket.id, { interactions });
       }
 
-      await fileService.deleteFromCollection('comments', id);
+      await supabaseService.delete('comments', id);
 
       res.json({
         success: true,
         message: 'Comment deleted successfully',
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * POST /api/comments/:id/like
-   * Da like a un comentario
-   */
-  async like(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { userId } = req.body;
-
-      const comment = fileService.findById('comments', id);
-      if (!comment) {
-        return res.status(404).json({
-          success: false,
-          error: 'Comment not found',
-        });
-      }
-
-      const user = fileService.findById('users', userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found',
-        });
-      }
-
-      // Verificar si ya dio like
-      if (comment.likedBy.includes(userId)) {
-        // Quitar like
-        comment.likedBy = comment.likedBy.filter(id => id !== userId);
-        comment.likes--;
-      } else {
-        // Agregar like
-        comment.likedBy.push(userId);
-        comment.likes++;
-      }
-
-      const updatedComment = await fileService.updateInCollection('comments', id, {
-        likes: comment.likes,
-        likedBy: comment.likedBy,
-      });
-
-      res.json({
-        success: true,
-        message: comment.likedBy.includes(userId) ? 'Like added' : 'Like removed',
-        data: updatedComment,
       });
     } catch (error) {
       next(error);

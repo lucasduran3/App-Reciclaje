@@ -1,76 +1,53 @@
 /**
- * Auth Controller - Controlador de autenticación
- * Ubicación: server/controllers/authController.js
+ * Auth Controller - Controlador de autenticación con Supabase
+ * La autenticación se maneja principalmente en el cliente
+ * El servidor solo proporciona endpoints auxiliares si son necesarios
  */
 
-import authService from '../services/authService.js';
+import supabase from '../config/supabase.js';
+import supabaseService from '../services/supabaseService.js';
 
 class AuthController {
   /**
-   * POST /api/auth/register
-   * Registra nuevo usuario
-   */
-  async register(req, res, next) {
-    try {
-      const result = await authService.register(req.body);
-
-      res.status(201).json({
-        success: true,
-        message: 'Cuenta creada exitosamente',
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * POST /api/auth/login
-   * Autentica usuario
-   */
-  async login(req, res, next) {
-    try {
-      const { identifier, password } = req.body;
-
-      if (!identifier || !password) {
-        return res.status(400).json({
-          success: false,
-          error: 'Identificador y contraseña son requeridos',
-        });
-      }
-
-      const result = await authService.login(identifier, password);
-
-      res.json({
-        success: true,
-        message: 'Login exitoso',
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
    * GET /api/auth/me
-   * Obtiene usuario actual (requiere autenticación)
+   * Obtiene usuario actual (requiere token de Supabase)
    */
   async getCurrentUser(req, res, next) {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
+      const authHeader = req.headers.authorization;
 
-      if (!token) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
           success: false,
           error: 'Token no proporcionado',
         });
       }
 
-      const user = await authService.getCurrentUser(token);
+      const token = authHeader.replace('Bearer ', '');
+
+      // Verificar el token con Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+
+      if (error || !user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Token inválido o expirado',
+        });
+      }
+
+      // Obtener perfil completo
+      const profile = await supabaseService.getById('profiles', user.id);
+
+      if (!profile) {
+        return res.status(404).json({
+          success: false,
+          error: 'Perfil de usuario no encontrado',
+        });
+      }
 
       res.json({
         success: true,
-        data: user,
+        data: profile,
       });
     } catch (error) {
       next(error);
@@ -79,13 +56,42 @@ class AuthController {
 
   /**
    * POST /api/auth/logout
-   * Cierra sesión (solo cliente limpia token)
+   * Cierra sesión (el cliente maneja esto, este endpoint es opcional)
    */
   async logout(req, res) {
     res.json({
       success: true,
       message: 'Sesión cerrada exitosamente',
     });
+  }
+
+  /**
+   * GET /api/auth/session
+   * Verifica si hay una sesión activa
+   */
+  async checkSession(req, res, next) {
+    try {
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.json({
+          success: true,
+          authenticated: false,
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+
+      res.json({
+        success: true,
+        authenticated: !error && !!user,
+        user: user || null,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 
