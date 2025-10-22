@@ -1,21 +1,23 @@
 /**
- * User Controller - Controlador de usuarios
+ * User Controller - Controlador de usuarios con Supabase
  */
 
-import fileService from '../services/fileService.js';
-import { validateUser } from '../services/validationService.js';
+import supabaseService from '../services/supabaseService.js';
 import { calculateLevel } from '../services/pointsService.js';
 import { updateStreak } from '../services/streakService.js';
-import { generateId } from '../utils/idGenerator.js';
 
 class UserController {
   /**
    * GET /api/users
-   * Obtiene todos los usuarios
+   * Obtiene todos los usuarios (perfiles públicos)
    */
   async getAll(req, res, next) {
     try {
-      const users = fileService.getCollection('users');
+      const users = await supabaseService.query('profiles', (query) => {
+        return query
+          .eq('preferences->>public_profile', 'true')
+          .order('points', { ascending: false });
+      });
 
       res.json({
         success: true,
@@ -34,7 +36,7 @@ class UserController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const user = fileService.findById('users', id);
+      const user = await supabaseService.getById('profiles', id);
 
       if (!user) {
         return res.status(404).json({
@@ -53,75 +55,6 @@ class UserController {
   }
 
   /**
-   * POST /api/users
-   * Crea un nuevo usuario
-   */
-  async create(req, res, next) {
-    try {
-      const userData = req.body;
-
-      // Validar datos
-      const validation = validateUser(userData);
-      if (!validation.valid) {
-        return res.status(400).json({
-          success: false,
-          errors: validation.errors,
-        });
-      }
-
-      // Verificar email único
-      const users = fileService.getCollection('users');
-      if (users.some(u => u.email === userData.email)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Email already exists',
-        });
-      }
-
-      // Crear usuario
-      const newUser = {
-        id: generateId('user'),
-        name: userData.name,
-        email: userData.email,
-        avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
-        points: 0,
-        level: 1,
-        streak: 0,
-        lastActivityDate: new Date().toISOString().split('T')[0],
-        zone: userData.zone,
-        stats: {
-          ticketsReported: 0,
-          ticketsAccepted: 0,
-          ticketsCleaned: 0,
-          ticketsValidated: 0,
-          missionsCompleted: 0,
-          likesGiven: 0,
-          likesReceived: 0,
-          commentsGiven: 0,
-          commentsReceived: 0,
-        },
-        badges: [],
-        preferences: {
-          notifications: true,
-          publicProfile: true,
-          theme: 'light',
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      await fileService.addToCollection('users', newUser);
-
-      res.status(201).json({
-        success: true,
-        message: 'User created successfully',
-        data: newUser,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
    * PUT /api/users/:id
    * Actualiza un usuario
    */
@@ -130,7 +63,7 @@ class UserController {
       const { id } = req.params;
       const updates = req.body;
 
-      const user = fileService.findById('users', id);
+      const user = await supabaseService.getById('profiles', id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -139,7 +72,7 @@ class UserController {
       }
 
       // Campos que se pueden actualizar
-      const allowedUpdates = ['name', 'avatar', 'zone', 'preferences'];
+      const allowedUpdates = ['name', 'last_name', 'avatar_url', 'city', 'neighborhood', 'preferences'];
       const updateData = {};
 
       for (const key of allowedUpdates) {
@@ -148,13 +81,18 @@ class UserController {
         }
       }
 
+      // Actualizar zona si cambian ciudad o barrio
+      if (updates.city || updates.neighborhood) {
+        updateData.zone = `${updates.city || user.city} - ${updates.neighborhood || user.neighborhood}`;
+      }
+
       // Recalcular nivel si hay cambio de puntos
       if (updates.points !== undefined) {
         updateData.points = updates.points;
         updateData.level = calculateLevel(updates.points);
       }
 
-      const updatedUser = await fileService.updateInCollection('users', id, updateData);
+      const updatedUser = await supabaseService.update('profiles', id, updateData);
 
       res.json({
         success: true,
@@ -174,7 +112,8 @@ class UserController {
     try {
       const { id } = req.params;
 
-      await fileService.deleteFromCollection('users', id);
+      // En Supabase, eliminar el perfil también eliminará el usuario de auth
+      await supabaseService.delete('profiles', id);
 
       res.json({
         success: true,
@@ -201,7 +140,7 @@ class UserController {
         });
       }
 
-      const user = fileService.findById('users', id);
+      const user = await supabaseService.getById('profiles', id);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -216,11 +155,11 @@ class UserController {
       // Actualizar racha
       const streakResult = updateStreak(user);
 
-      const updatedUser = await fileService.updateInCollection('users', id, {
+      const updatedUser = await supabaseService.update('profiles', id, {
         points: newPoints + streakResult.pointsAwarded,
         level: newLevel,
         streak: streakResult.streak,
-        lastActivityDate: user.lastActivityDate,
+        last_activity_date: user.last_activity_date,
         badges: user.badges,
       });
 
@@ -248,7 +187,7 @@ class UserController {
   async getStats(req, res, next) {
     try {
       const { id } = req.params;
-      const user = fileService.findById('users', id);
+      const user = await supabaseService.getById('profiles', id);
 
       if (!user) {
         return res.status(404).json({
@@ -258,12 +197,17 @@ class UserController {
       }
 
       // Obtener tickets del usuario
-      const tickets = fileService.getCollection('tickets');
-      const userTickets = {
-        reported: tickets.filter(t => t.reportedBy === id),
-        accepted: tickets.filter(t => t.acceptedBy === id),
-        validated: tickets.filter(t => t.validatedBy === id),
-      };
+      const reportedTickets = await supabaseService.query('tickets', (query) => 
+        query.eq('reported_by', id)
+      );
+
+      const acceptedTickets = await supabaseService.query('tickets', (query) => 
+        query.eq('accepted_by', id)
+      );
+
+      const validatedTickets = await supabaseService.query('tickets', (query) => 
+        query.eq('validated_by', id)
+      );
 
       res.json({
         success: true,
@@ -271,7 +215,7 @@ class UserController {
           user: {
             id: user.id,
             name: user.name,
-            avatar: user.avatar,
+            avatar_url: user.avatar_url,
             points: user.points,
             level: user.level,
             streak: user.streak,
@@ -280,9 +224,9 @@ class UserController {
           stats: user.stats,
           badges: user.badges,
           tickets: {
-            reported: userTickets.reported.length,
-            accepted: userTickets.accepted.length,
-            validated: userTickets.validated.length,
+            reported: reportedTickets.length,
+            accepted: acceptedTickets.length,
+            validated: validatedTickets.length,
           },
         },
       });

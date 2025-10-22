@@ -1,14 +1,13 @@
 /**
- * Ticket Controller - Controlador de tickets
+ * Ticket Controller - Controlador de tickets con Supabase (Parte 1)
  */
 
-import fileService from "../services/fileService.js";
+import supabaseService from "../services/supabaseService.js";
 import {
   validateTicket,
   validateTicketStatusTransition,
 } from "../services/validationService.js";
 import { calculateTicketPoints } from "../services/pointsService.js";
-import { generateId } from "../utils/idGenerator.js";
 
 class TicketController {
   /**
@@ -17,30 +16,19 @@ class TicketController {
    */
   async getAll(req, res, next) {
     try {
-      let tickets = fileService.getCollection("tickets");
-
-      // Filtros
       const { status, zone, type, reportedBy, acceptedBy } = req.query;
 
-      if (status) {
-        tickets = tickets.filter((t) => t.status === status);
-      }
+      let tickets = await supabaseService.query("tickets", (query) => {
+        let q = query.order("created_at", { ascending: false });
 
-      if (zone) {
-        tickets = tickets.filter((t) => t.zone === zone);
-      }
+        if (status) q = q.eq("status", status);
+        if (zone) q = q.eq("zone", zone);
+        if (type) q = q.eq("type", type);
+        if (reportedBy) q = q.eq("reported_by", reportedBy);
+        if (acceptedBy) q = q.eq("accepted_by", acceptedBy);
 
-      if (type) {
-        tickets = tickets.filter((t) => t.type === type);
-      }
-
-      if (reportedBy) {
-        tickets = tickets.filter((t) => t.reportedBy === reportedBy);
-      }
-
-      if (acceptedBy) {
-        tickets = tickets.filter((t) => t.acceptedBy === acceptedBy);
-      }
+        return q;
+      });
 
       res.json({
         success: true,
@@ -54,12 +42,12 @@ class TicketController {
 
   /**
    * GET /api/tickets/:id
-   * Obtiene un ticket por ID
+   * Obtiene un ticket por ID e incrementa vistas
    */
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
 
       if (!ticket) {
         return res.status(404).json({
@@ -69,10 +57,18 @@ class TicketController {
       }
 
       // Incrementar vistas
-      ticket.interactions.views++;
-      await fileService.updateInCollection("tickets", id, {
-        interactions: ticket.interactions,
-      });
+      const interactions = ticket.interactions || {
+        likes: 0,
+        views: 0,
+        comments: 0,
+        liked_by: [],
+      };
+      interactions.views = (interactions.views || 0) + 1;
+
+      await supabaseService.update("tickets", id, { interactions });
+
+      // Devolver ticket con vistas actualizadas
+      ticket.interactions = interactions;
 
       res.json({
         success: true,
@@ -91,17 +87,26 @@ class TicketController {
     try {
       const ticketData = req.body;
 
-      // Validar datos
-      const validation = validateTicket(ticketData);
-      if (!validation.valid) {
+      // Validar datos básicos
+      if (!ticketData.title || ticketData.title.length < 10) {
         return res.status(400).json({
           success: false,
-          errors: validation.errors,
+          error: "Title must be at least 10 characters",
+        });
+      }
+
+      if (!ticketData.description || ticketData.description.length < 20) {
+        return res.status(400).json({
+          success: false,
+          error: "Description must be at least 20 characters",
         });
       }
 
       // Verificar que el usuario existe
-      const user = fileService.findById("users", ticketData.reportedBy);
+      const user = await supabaseService.getById(
+        "profiles",
+        ticketData.reported_by
+      );
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -111,49 +116,32 @@ class TicketController {
 
       // Crear ticket
       const newTicket = {
-        id: generateId("ticket"),
         title: ticketData.title,
         description: ticketData.description,
-        location: ticketData.location,
+        location: `(${ticketData.location.lat},${ticketData.location.lng})`, // PostGIS point format
+        address: ticketData.address,
         zone: ticketData.zone,
         type: ticketData.type,
         priority: ticketData.priority || "medium",
-        estimatedSize: ticketData.estimatedSize || "medium",
+        estimated_size: ticketData.estimated_size || "medium",
         status: "reported",
-        reportedBy: ticketData.reportedBy,
-        acceptedBy: null,
-        validatedBy: null,
-        photos: {
-          before: ticketData.photos.before,
-          after: [],
-        },
-        validation: {
-          type: null,
-          status: null,
-          qrCode: null,
-          validatedAt: null,
-        },
-        cleaningStatus: null,
-        pointsAwarded: null,
+        reported_by: ticketData.reported_by,
+        photos_before: ticketData.photos_before,
         interactions: {
           likes: 0,
           comments: 0,
           views: 0,
-          likedBy: [],
+          liked_by: [],
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        acceptedAt: null,
-        completedAt: null,
       };
 
-      await fileService.addToCollection("tickets", newTicket);
+      const createdTicket = await supabaseService.create("tickets", newTicket);
 
       // Actualizar stats del usuario
-      user.stats.ticketsReported++;
-      await fileService.updateInCollection("users", user.id, {
-        stats: user.stats,
-      });
+      const stats = user.stats || {};
+      stats.tickets_reported = (stats.tickets_reported || 0) + 1;
+
+      await supabaseService.update("profiles", user.id, { stats });
 
       // Dar puntos al reportante
       const userController = (await import("./userController.js")).default;
@@ -169,7 +157,7 @@ class TicketController {
       res.status(201).json({
         success: true,
         message: "Ticket created successfully",
-        data: newTicket,
+        data: createdTicket,
       });
     } catch (error) {
       next(error);
@@ -185,7 +173,7 @@ class TicketController {
       const { id } = req.params;
       const updates = req.body;
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -207,7 +195,7 @@ class TicketController {
         }
       }
 
-      const updatedTicket = await fileService.updateInCollection(
+      const updatedTicket = await supabaseService.update(
         "tickets",
         id,
         updates
@@ -231,7 +219,7 @@ class TicketController {
     try {
       const { id } = req.params;
 
-      await fileService.deleteFromCollection("tickets", id);
+      await supabaseService.delete("tickets", id);
 
       res.json({
         success: true,
@@ -246,12 +234,13 @@ class TicketController {
    * POST /api/tickets/:id/accept
    * Acepta un ticket para limpiar
    */
+
   async accept(req, res, next) {
     try {
       const { id } = req.params;
       const { userId } = req.body;
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -266,14 +255,14 @@ class TicketController {
         });
       }
 
-      if (ticket.reportedBy === userId) {
+      if (ticket.reported_by === userId) {
         return res.status(400).json({
           success: false,
           error: "Cannot accept your own ticket",
         });
       }
 
-      const user = fileService.findById("users", userId);
+      const user = await supabaseService.getById("profiles", userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -282,21 +271,16 @@ class TicketController {
       }
 
       // Actualizar ticket
-      const updatedTicket = await fileService.updateInCollection(
-        "tickets",
-        id,
-        {
-          status: "accepted",
-          acceptedBy: userId,
-          acceptedAt: new Date().toISOString(),
-        }
-      );
+      const updatedTicket = await supabaseService.update("tickets", id, {
+        status: "accepted",
+        accepted_by: userId,
+        accepted_at: new Date().toISOString(),
+      });
 
       // Actualizar stats del usuario
-      user.stats.ticketsAccepted++;
-      await fileService.updateInCollection("users", userId, {
-        stats: user.stats,
-      });
+      const stats = user.stats || {};
+      stats.tickets_accepted = (stats.tickets_accepted || 0) + 1;
+      await supabaseService.update("profiles", userId, { stats });
 
       // Dar puntos
       const userController = (await import("./userController.js")).default;
@@ -326,9 +310,10 @@ class TicketController {
   async complete(req, res, next) {
     try {
       const { id } = req.params;
-      const { photosAfter, cleaningStatus, validationType, qrCode } = req.body;
+      const { photos_after, cleaning_status, validation_type, qr_code } =
+        req.body;
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -343,7 +328,7 @@ class TicketController {
         });
       }
 
-      if (!photosAfter || photosAfter.length === 0) {
+      if (!photos_after || photos_after.length === 0) {
         return res.status(400).json({
           success: false,
           error: "At least one after photo is required",
@@ -351,24 +336,14 @@ class TicketController {
       }
 
       // Actualizar ticket
-      const updatedTicket = await fileService.updateInCollection(
-        "tickets",
-        id,
-        {
-          status: "validating",
-          photos: {
-            ...ticket.photos,
-            after: photosAfter,
-          },
-          cleaningStatus: cleaningStatus || "complete",
-          validation: {
-            type: validationType || "photo",
-            status: "pending",
-            qrCode: qrCode || null,
-            validatedAt: null,
-          },
-        }
-      );
+      const updatedTicket = await supabaseService.update("tickets", id, {
+        status: "validating",
+        photos_after: photos_after,
+        cleaning_status: cleaning_status || "complete",
+        validation_type: validation_type || "photo",
+        validation_status: "pending",
+        qr_code: qr_code || null,
+      });
 
       res.json({
         success: true,
@@ -389,7 +364,7 @@ class TicketController {
       const { id } = req.params;
       const { userId, approved, rejectionReason } = req.body;
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -406,8 +381,8 @@ class TicketController {
 
       // Si es validación por reportante, verificar que sea el mismo
       if (
-        ticket.validation.type === "reporter" &&
-        ticket.reportedBy !== userId
+        ticket.validation_type === "reporter" &&
+        ticket.reported_by !== userId
       ) {
         return res.status(403).json({
           success: false,
@@ -415,7 +390,7 @@ class TicketController {
         });
       }
 
-      const user = fileService.findById("users", userId);
+      const user = await supabaseService.getById("profiles", userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -427,35 +402,35 @@ class TicketController {
         // Validación aprobada - completar ticket
         const points = calculateTicketPoints(ticket);
 
-        const updatedTicket = await fileService.updateInCollection(
-          "tickets",
-          id,
-          {
-            status: "completed",
-            validatedBy: userId,
-            validation: {
-              ...ticket.validation,
-              status: "approved",
-              validatedAt: new Date().toISOString(),
-            },
-            pointsAwarded: points,
-            completedAt: new Date().toISOString(),
-          }
-        );
+        const updatedTicket = await supabaseService.update("tickets", id, {
+          status: "completed",
+          validated_by: userId,
+          validation_status: "approved",
+          validated_at: new Date().toISOString(),
+          points_awarded: points,
+          completed_at: new Date().toISOString(),
+        });
 
         // Actualizar stats y dar puntos a todos los participantes
         const userController = (await import("./userController.js")).default;
 
         // Limpiador
-        if (ticket.acceptedBy) {
-          const cleaner = fileService.findById("users", ticket.acceptedBy);
-          cleaner.stats.ticketsCleaned++;
-          await fileService.updateInCollection("users", ticket.acceptedBy, {
-            stats: cleaner.stats,
+        if (ticket.accepted_by) {
+          const cleaner = await supabaseService.getById(
+            "profiles",
+            ticket.accepted_by
+          );
+          const cleanerStats = cleaner.stats || {};
+          cleanerStats.tickets_cleaned =
+            (cleanerStats.tickets_cleaned || 0) + 1;
+
+          await supabaseService.update("profiles", ticket.accepted_by, {
+            stats: cleanerStats,
           });
+
           await userController.addPoints(
             {
-              params: { id: ticket.acceptedBy },
+              params: { id: ticket.accepted_by },
               body: { points: points.cleaner, reason: "Cleaning completed" },
             },
             { json: () => {} },
@@ -464,10 +439,14 @@ class TicketController {
         }
 
         // Validador
-        user.stats.ticketsValidated++;
-        await fileService.updateInCollection("users", userId, {
-          stats: user.stats,
+        const validatorStats = user.stats || {};
+        validatorStats.tickets_validated =
+          (validatorStats.tickets_validated || 0) + 1;
+
+        await supabaseService.update("profiles", userId, {
+          stats: validatorStats,
         });
+
         await userController.addPoints(
           {
             params: { id: userId },
@@ -487,19 +466,12 @@ class TicketController {
         });
       } else {
         // Validación rechazada
-        const updatedTicket = await fileService.updateInCollection(
-          "tickets",
-          id,
-          {
-            status: "rejected",
-            validation: {
-              ...ticket.validation,
-              status: "rejected",
-              validatedAt: new Date().toISOString(),
-              rejectionReason: rejectionReason || "Validation rejected",
-            },
-          }
-        );
+        const updatedTicket = await supabaseService.update("tickets", id, {
+          status: "rejected",
+          validation_status: "rejected",
+          validated_at: new Date().toISOString(),
+          rejection_reason: rejectionReason || "Validation rejected",
+        });
 
         res.json({
           success: true,
@@ -521,7 +493,7 @@ class TicketController {
       const { id } = req.params;
       const { userId } = req.body;
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -529,7 +501,7 @@ class TicketController {
         });
       }
 
-      const user = fileService.findById("users", userId);
+      const user = await supabaseService.getById("profiles", userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -537,46 +509,54 @@ class TicketController {
         });
       }
 
+      // Obtener interacciones actuales
+      const interactions = ticket.interactions || {
+        likes: 0,
+        views: 0,
+        comments: 0,
+        liked_by: [],
+      };
+      const likedBy = interactions.liked_by || [];
+
       // Verificar si ya dio like
-      if (ticket.interactions.likedBy.includes(userId)) {
+      if (likedBy.includes(userId)) {
         // Quitar like
-        ticket.interactions.likedBy = ticket.interactions.likedBy.filter(
-          (id) => id !== userId
-        );
-        ticket.interactions.likes--;
+        interactions.liked_by = likedBy.filter((id) => id !== userId);
+        interactions.likes = Math.max(0, (interactions.likes || 0) - 1);
       } else {
         // Agregar like
-        ticket.interactions.likedBy.push(userId);
-        ticket.interactions.likes++;
+        interactions.liked_by = [...likedBy, userId];
+        interactions.likes = (interactions.likes || 0) + 1;
 
         // Dar puntos al dueño del ticket
-        const reporter = fileService.findById("users", ticket.reportedBy);
+        const reporter = await supabaseService.getById(
+          "profiles",
+          ticket.reported_by
+        );
         if (reporter) {
-          reporter.stats.likesReceived++;
-          await fileService.updateInCollection("users", ticket.reportedBy, {
-            stats: reporter.stats,
+          const reporterStats = reporter.stats || {};
+          reporterStats.likes_received =
+            (reporterStats.likes_received || 0) + 1;
+
+          await supabaseService.update("profiles", ticket.reported_by, {
+            stats: reporterStats,
             points: reporter.points + 5,
           });
         }
 
         // Actualizar stats del usuario que dio like
-        user.stats.likesGiven++;
-        await fileService.updateInCollection("users", userId, {
-          stats: user.stats,
-        });
+        const userStats = user.stats || {};
+        userStats.likes_given = (userStats.likes_given || 0) + 1;
+        await supabaseService.update("profiles", userId, { stats: userStats });
       }
 
-      const updatedTicket = await fileService.updateInCollection(
-        "tickets",
-        id,
-        {
-          interactions: ticket.interactions,
-        }
-      );
+      const updatedTicket = await supabaseService.update("tickets", id, {
+        interactions,
+      });
 
       res.json({
         success: true,
-        message: ticket.interactions.likedBy.includes(userId)
+        message: interactions.liked_by.includes(userId)
           ? "Like added"
           : "Like removed",
         data: updatedTicket,
@@ -595,7 +575,7 @@ class TicketController {
       const { id } = req.params;
       const { userId, text } = req.body;
 
-      if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      if (!text || typeof text !== "string" || text.trim().length === 0) {
         return res.status(400).json({
           success: false,
           error: "Comment text is required and cannot be empty",
@@ -609,7 +589,7 @@ class TicketController {
         });
       }
 
-      const ticket = fileService.findById("tickets", id);
+      const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
@@ -617,7 +597,7 @@ class TicketController {
         });
       }
 
-      const user = fileService.findById("users", userId);
+      const user = await supabaseService.getById("profiles", userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -629,39 +609,41 @@ class TicketController {
         .trim()
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")  // ✅ Corregido: era /</g
+        .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
       const newComment = {
-        id: `comment-${Date.now()}`,  // ✅ Corregido
-        ticketId: id,
-        userId: userId,
-        userName: user.name,
-        userAvatar: user.avatar,
+        ticket_id: id,
+        user_id: userId,
         content: sanitizedText,
-        likes: 0,
-        likedBy: [],
-        createdAt: new Date().toISOString(),
       };
 
-      await fileService.addToCollection("comments", newComment);
+      const createdComment = await supabaseService.create(
+        "comments",
+        newComment
+      );
 
-      ticket.interactions.comments++;
-      await fileService.updateInCollection("tickets", id, {
-        interactions: ticket.interactions,
-      });
+      // Actualizar contador de comentarios en ticket
+      const interactions = ticket.interactions || {
+        likes: 0,
+        views: 0,
+        comments: 0,
+        liked_by: [],
+      };
+      interactions.comments = (interactions.comments || 0) + 1;
+
+      await supabaseService.update("tickets", id, { interactions });
 
       // Actualizar stats del usuario
-      user.stats.commentsGiven++;
-      await fileService.updateInCollection("users", userId, {
-        stats: user.stats,
-      });
+      const userStats = user.stats || {};
+      userStats.comments_given = (userStats.comments_given || 0) + 1;
+      await supabaseService.update("profiles", userId, { stats: userStats });
 
       res.status(201).json({
         success: true,
         message: "Comment added successfully",
-        data: newComment,
+        data: createdComment,
       });
     } catch (error) {
       next(error);
