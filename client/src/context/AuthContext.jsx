@@ -101,6 +101,54 @@ export function AuthProvider({ children }) {
     }
   }
 
+    async function register (userData) {
+    try {
+      // 1. Crear usuario en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            username: userData.username,
+            name: userData.name,
+            last_name: userData.lastName || "",
+            role: userData.role || "user",
+            city: userData.city || "",
+            neighborhood: userData.neighborhood || "",
+            avatar_url: 'https://api.dicebear.com/9.x/avataaars/svg?seed=maria'
+          },
+          options: {
+            emailRedirectTo: "http://localhost:5173/login",
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // 2. El perfil se crea automáticamente por el trigger de Supabase
+      // pero podemos actualizar campos adicionales si es necesario
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            city: userData.city,
+            neighborhood: userData.neighborhood,
+          })
+          .eq("id", authData.user.id);
+
+        if (profileError) throw profileError;
+
+        // Cargar el perfil completo
+        await loadUserProfile(authData.user.id);
+      }
+
+      return { success: true, user: authData.user };
+    } catch (error) {
+      console.error("Error registering:", error);
+      throw error;
+    }
+  };
+
   // LOGIN que usa la respuesta inmediata
   async function login(email, password) {
     setAuthLoading(true);
@@ -146,6 +194,7 @@ export function AuthProvider({ children }) {
         profileLoading,
         isAuthenticated: !!session,
         login,
+        register,
         logout,
         loadUserProfile,
       }}
