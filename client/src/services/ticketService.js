@@ -1,31 +1,111 @@
 /**
- * Ticket Service - Servicio para operaciones de tickets
+ * Ticket Service - Servicio para operaciones de tickets con Supabase
  */
 
-import apiClient from "./apiClient";
+import supabase from '../config/supabase';
+import apiClient from './apiClient';
 
 class TicketService {
   /**
    * Obtiene todos los tickets con filtros opcionales
    */
   async getAll(filters = {}) {
-    const params = new URLSearchParams(filters);
-    return apiClient.request(`/tickets?${params}`);
+    try {
+      let query = supabase
+        .from('tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Aplicar filtros
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+      if (filters.zone) {
+        query = query.eq('zone', filters.zone);
+      }
+      if (filters.type) {
+        query = query.eq('type', filters.type);
+      }
+      if (filters.reportedBy) {
+        query = query.eq('reported_by', filters.reportedBy);
+      }
+      if (filters.acceptedBy) {
+        query = query.eq('accepted_by', filters.acceptedBy);
+      }
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data || [],
+      };
+    } catch (error) {
+      console.error('Error getting tickets:', error);
+      throw error;
+    }
   }
 
   /**
    * Obtiene un ticket por ID
    */
   async getById(id) {
-    return apiClient.request(`/tickets/${id}`);
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // Incrementar vistas (no esperar la respuesta)
+      this.incrementViews(id, data.interactions);
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      console.error('Error getting ticket:', error);
+      throw error;
+    }
   }
 
   /**
-   * Crea un nuevo ticket (reportar)
+   * Incrementa las vistas de un ticket
+   */
+  async incrementViews(id, currentInteractions) {
+    try {
+      const interactions = currentInteractions || { 
+        likes: 0, 
+        views: 0, 
+        comments: 0, 
+        liked_by: [] 
+      };
+      
+      interactions.views = (interactions.views || 0) + 1;
+
+      await supabase
+        .from('tickets')
+        .update({ interactions })
+        .eq('id', id);
+    } catch (error) {
+      console.error('Error incrementing views:', error);
+      // No lanzar error, es una operación en background
+    }
+  }
+
+  /**
+   * Crea un nuevo ticket (usa el backend para validaciones)
    */
   async create(ticketData) {
-    return apiClient.request("/tickets", {
-      method: "POST",
+    return apiClient.request('/tickets', {
+      method: 'POST',
       body: JSON.stringify(ticketData),
     });
   }
@@ -35,7 +115,7 @@ class TicketService {
    */
   async update(id, updates) {
     return apiClient.request(`/tickets/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(updates),
     });
   }
@@ -45,16 +125,16 @@ class TicketService {
    */
   async delete(id) {
     return apiClient.request(`/tickets/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   }
 
   /**
-   * Acepta un ticket para limpiar
+   * Acepta un ticket para limpiar (usa el backend para lógica compleja)
    */
   async accept(id, userId) {
     return apiClient.request(`/tickets/${id}/accept`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ userId }),
     });
   }
@@ -64,7 +144,7 @@ class TicketService {
    */
   async complete(id, data) {
     return apiClient.request(`/tickets/${id}/complete`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(data),
     });
   }
@@ -74,7 +154,7 @@ class TicketService {
    */
   async validate(id, userId, approved, rejectionReason) {
     return apiClient.request(`/tickets/${id}/validate`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ userId, approved, rejectionReason }),
     });
   }
@@ -84,14 +164,17 @@ class TicketService {
    */
   async like(id, userId) {
     return apiClient.request(`/tickets/${id}/like`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ userId }),
     });
   }
 
+  /**
+   * Añade un comentario a un ticket
+   */
   async addComment(id, userId, text) {
     return apiClient.request(`/tickets/${id}/comments`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ userId, text }),
     });
   }
@@ -99,7 +182,7 @@ class TicketService {
   /**
    * Obtiene tickets por usuario
    */
-  async getByUser(userId, role = "reported") {
+  async getByUser(userId, role = 'reported') {
     const filterMap = {
       reported: { reportedBy: userId },
       accepted: { acceptedBy: userId },
@@ -121,6 +204,33 @@ class TicketService {
    */
   async getByStatus(status) {
     return this.getAll({ status });
+  }
+
+  /**
+   * Suscripción en tiempo real a cambios en tickets
+   */
+  subscribeToTickets(callback) {
+    const subscription = supabase
+      .channel('tickets-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tickets' },
+        (payload) => {
+          callback(payload);
+        }
+      )
+      .subscribe();
+
+    return subscription;
+  }
+
+  /**
+   * Cancela suscripción
+   */
+  unsubscribeFromTickets(subscription) {
+    if (subscription) {
+      supabase.removeChannel(subscription);
+    }
   }
 }
 

@@ -1,59 +1,67 @@
 /**
- * AppContext - Estado global de la aplicación
+ * AppContext - Estado global de la aplicación con Supabase
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiClient from '../services/apiClient';
+import supabase from '../config/supabase';
+import userService from '../services/userService';
 
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
-  const [appData, setAppData] = useState(null);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadAppData();
+    loadUsers();
+    
+    // Suscribirse a cambios en usuarios
+    const subscription = supabase
+      .channel('users-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          // Recargar usuarios cuando hay cambios
+          loadUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
-  const loadAppData = async () => {
+  const loadUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getAllData();
-      setAppData(response.data);
+      const response = await userService.getAll();
+      setUsers(response.data);
     } catch (err) {
       setError(err.message);
-      console.error('Error loading app data:', err);
+      console.error('Error loading users:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const refreshData = async () => {
-    await loadAppData();
-  };
-
-  const updateTickets = (tickets) => {
-    setAppData(prev => ({ ...prev, tickets }));
-  };
-
-  const updateMissions = (missions) => {
-    setAppData(prev => ({ ...prev, missions }));
-  };
-
-  const updateUsers = (users) => {
-    setAppData(prev => ({ ...prev, users }));
+  const refreshUsers = async () => {
+    await loadUsers();
   };
 
   const value = {
-    appData,
+    users,
     loading,
     error,
-    refreshData,
-    updateTickets,
-    updateMissions,
-    updateUsers,
+    refreshUsers,
+    // Mantener compatibilidad con código anterior
+    appData: {
+      users,
+    },
+    refreshData: refreshUsers,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

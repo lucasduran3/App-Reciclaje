@@ -7,6 +7,7 @@ import React, { use, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useAuth } from "../context/AuthContext";
+import authService from '../services/authService';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
