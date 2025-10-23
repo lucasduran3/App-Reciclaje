@@ -8,7 +8,12 @@ client/dist/
 client/build/
 
 # Environment variables
+.env
+.env.local
+.env.*.local
 
+client/.env.local
+server/.env
 
 # Logs
 *.log

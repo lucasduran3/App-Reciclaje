@@ -213,14 +213,14 @@ export default function TicketDetail() {
                     Reportado
                   </div>
                   <div style={{ fontWeight: 500 }}>
-                    {new Date(ticket.createdAt).toLocaleDateString('es-ES', {
+                    {new Date(ticket.created_at).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
                     })}
                   </div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                    {new Date(ticket.createdAt).toLocaleTimeString('es-ES', {
+                    {new Date(ticket.created_at).toLocaleTimeString('es-ES', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
@@ -231,12 +231,12 @@ export default function TicketDetail() {
           </Card>
 
           {/* Fotos */}
-          {ticket.photos.before && ticket.photos.before.length > 0 && (
+          {ticket.photos_before && ticket.photos_before.length > 0 && (
             <Card style={{ marginBottom: 'var(--spacing-lg)' }}>
               <h3 className="card-title">Fotos del Reporte</h3>
               <div>
                 <img
-                  src={ticket.photos.before[currentImageIndex]}
+                  src={ticket.photos_before[currentImageIndex]}
                   alt={`Foto ${currentImageIndex + 1}`}
                   style={{
                     width: '100%',
@@ -246,14 +246,14 @@ export default function TicketDetail() {
                     marginBottom: 'var(--spacing-md)'
                   }}
                 />
-                {ticket.photos.before.length > 1 && (
+                {ticket.photos_before.length > 1 && (
                   <div style={{ 
                     display: 'flex', 
                     gap: 'var(--spacing-sm)',
                     overflowX: 'auto',
                     paddingBottom: 'var(--spacing-sm)'
                   }}>
-                    {ticket.photos.before.map((photo, index) => (
+                    {ticket.photos_before.map((photo, index) => (
                       <img
                         key={index}
                         src={photo}
@@ -378,7 +378,7 @@ export default function TicketDetail() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 {comments.map((comment) => {
-                  const commentUser = users.find(u => u.id === comment.userId);
+                  const commentUser = users.find(u => u.id === comment.user_id);
                   return (
                     <div 
                       key={comment.id}
@@ -406,14 +406,14 @@ export default function TicketDetail() {
                           gap: 'var(--spacing-sm)'
                         }}>
                           <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>
-                            {comment.userName || commentUser?.name || 'Usuario'}
+                            {comment.username || commentUser?.name || 'Usuario'}
                           </span>
                           <span style={{ 
                             fontSize: '0.75rem',
                             color: 'var(--text-muted)',
                             flexShrink: 0
                           }}>
-                            {new Date(comment.createdAt).toLocaleDateString('es-ES', {
+                            {new Date(comment.created_at).toLocaleDateString('es-ES', {
                               day: 'numeric',
                               month: 'short',
                               hour: '2-digit',

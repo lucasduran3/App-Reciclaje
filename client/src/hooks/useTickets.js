@@ -154,7 +154,7 @@ export function useTicket(ticketId) {
 
   // Helpers
   const isLikedByUser = ticket && currentUser 
-    ? ticket.interactions.likedBy.includes(currentUser.id)
+    ? ticket.interactions.liked_by.includes(currentUser.id)
     : false;
 
   const canAccept = ticket && currentUser 

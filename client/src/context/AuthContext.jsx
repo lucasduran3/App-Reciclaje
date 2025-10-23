@@ -49,7 +49,6 @@ export function AuthProvider({ children }) {
             null;
           // deduplicar si es la misma sesión ya procesada
           if (token && token === lastAccessTokenRef.current) {
-            console.log("Ignored duplicate auth event");
             return;
           }
           lastAccessTokenRef.current = token;
@@ -159,7 +158,6 @@ export function AuthProvider({ children }) {
       });
       if (error) throw error;
       // data.session / data.user
-      console.log("signInWithPassword response:", data);
       setSession(data.session ?? null);
       if (data?.user?.id) {
         await loadUserProfile(data.user.id);

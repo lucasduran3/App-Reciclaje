@@ -3,8 +3,8 @@
  * Crear este archivo en server/routes/commentRoutes.js
  */
 
-import express from 'express';
-import supabaseService from '../services/supabaseService.js';
+import express from "express";
+import supabaseService from "../services/supabaseService.js";
 
 const router = express.Router();
 
@@ -12,14 +12,14 @@ const router = express.Router();
  * GET /api/comments
  * Obtiene todos los comentarios
  */
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const comments = supabaseService.getAll('comments');
-    
+    const comments = await supabaseService.getAll("comments");
+
     res.json({
       success: true,
       count: comments.length,
-      data: comments
+      data: comments,
     });
   } catch (error) {
     next(error);
@@ -30,16 +30,16 @@ router.get('/', async (req, res, next) => {
  * GET /api/comments/ticket/:ticketId
  * Obtiene comentarios de un ticket específico
  */
-router.get('/ticket/:ticketId', async (req, res, next) => {
+router.get("/ticket/:ticketId", async (req, res, next) => {
   try {
     const { ticketId } = req.params;
-    const comments = supabaseService.getAll('comments');
-    const ticketComments = comments.filter(c => c.ticketId === ticketId);
-    
+    const comments = await supabaseService.getAll("comments");
+    const ticketComments = comments.filter((c) => c.ticket_id === ticketId);
+
     res.json({
       success: true,
       count: ticketComments.length,
-      data: ticketComments
+      data: ticketComments,
     });
   } catch (error) {
     next(error);
