@@ -11,6 +11,7 @@ import { useUsers } from "../hooks/useUsers";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Badge from "../components/common/Badge";
+import ConfirmModal from "../components/common/ConfirmModal";
 import Avatar from "../components/common/Avatar";
 import TicketActions from "../components/tickets/TicketActions";
 import apiClient from "../services/apiClient";
@@ -342,7 +343,7 @@ export default function TicketDetail() {
                         />
                       )}
                       <div className="comment-card-container">
-                        <div className="commnet-info-container">
+                        <div className="comment-info-container">
                           <span
                             style={{ fontWeight: 600, wordBreak: "break-word" }}
                           >
@@ -450,46 +451,16 @@ export default function TicketDetail() {
 
       {/* Modal de confirmación para aceptar */}
       {showAcceptModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowAcceptModal(false)}
-        >
-          <div
-            className="modal modal-small"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2 className="modal-title">Aceptar Ticket</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowAcceptModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>¿Estás seguro que deseas aceptar este ticket?</p>
-              <p
-                style={{
-                  fontSize: "0.875rem",
-                  color: "var(--text-secondary)",
-                  marginTop: "var(--spacing-md)",
-                }}
-              >
-                Al aceptar, te comprometes a resolver este reporte y ganarás 20
-                puntos.
-              </p>
-            </div>
-            <div className="modal-footer">
-              <Button variant="ghost" onClick={() => setShowAcceptModal(false)}>
-                Cancelar
-              </Button>
-              <Button variant="secondary" onClick={confirmAccept}>
-                Sí, aceptar ticket
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          isOpen={showAcceptModal}
+          onClose={() => setShowAcceptModal(false)}
+          title="Aceptar Ticket"
+          message="¿Estás seguro que deseas aceptar este ticket?"
+          subMessage="Al aceptar, te comprometes a resolver este reporte y ganarás 20 puntos."
+          cancelText="Cancelar"
+          confirmText="Sí, aceptar ticket"
+          onConfirm={confirmAccept}
+        ></ConfirmModal>
       )}
     </div>
   );

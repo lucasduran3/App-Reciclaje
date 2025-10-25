@@ -1,36 +1,36 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
-export default function Modal({ 
-  isOpen, 
-  onClose, 
+export default function Modal({
+  isOpen,
+  onClose,
   title,
   children,
   footer,
-  size = 'medium'
+  size = "medium",
 }) {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const sizeClasses = {
-    small: 'modal-small',
-    medium: 'modal-medium',
-    large: 'modal-large',
-    fullscreen: 'modal-fullscreen',
+    small: "modal-small",
+    medium: "modal-medium",
+    large: "modal-large",
+    fullscreen: "modal-fullscreen",
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div 
+      <div
         className={`modal ${sizeClasses[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -40,14 +40,8 @@ export default function Modal({
             ✕
           </button>
         </div>
-        <div className="modal-body">
-          {children}
-        </div>
-        {footer && (
-          <div className="modal-footer">
-            {footer}
-          </div>
-        )}
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>
   );
