@@ -159,12 +159,13 @@ export function useTicket(ticketId) {
 
   const canAccept = ticket && currentUser 
     ? (ticket.status === 'reported' || ticket.status === 'rejected') && 
-      ticket.reportedBy !== currentUser.id
+      ticket.reported_by !== currentUser.id
     : false;
+
 
   const canValidate = ticket && currentUser
     ? ticket.status === 'validating' && 
-      (ticket.reportedBy === currentUser.id || currentUser.role === 'admin')
+      (ticket.reported_by === currentUser.id || currentUser.role === 'admin')
     : false;
 
   return {

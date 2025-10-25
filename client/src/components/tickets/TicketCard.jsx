@@ -58,7 +58,7 @@ export default function TicketCard({ ticket, users = [] }) {
       <div className="ticket-card-meta">
         <span className="ticket-card-zone"><Icon icon="fluent-color:pin-16"></Icon> {ticket.zone}</span>
         <span className="ticket-card-date">
-          {new Date(ticket.createdAt).toLocaleDateString('es-AR')}
+          {new Date(ticket.created_at).toLocaleDateString('es-AR')}
         </span>
       </div>
 
