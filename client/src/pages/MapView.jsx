@@ -15,6 +15,8 @@ import Loader from "../components/common/Loader";
 import MapContainer from "../components/map/MapContainer";
 import MapLegend from "../components/map/MapLegend";
 import MapMarkersGroup from "../components/map/MapMarkersGroup";
+import TicketMapModal from "../components/map/TicketMapModal";
+import { useApp } from "../context/AppContext";
 
 const STATUS_CONFIG = {
   reported: {
@@ -57,14 +59,17 @@ const STATUS_CONFIG = {
 
 export default function MapView() {
   const navigate = useNavigate();
+  const { users } = useApp();
   const [filters, setFilters] = useState({});
   const [selectedTicket, setSelectedTicket] = useState(null);
   const { tickets, loading, refreshTickets } = useTickets(filters);
 
   const handleMarkerClick = (ticket) => {
     setSelectedTicket(ticket);
-    // En el Paso 4 abriremos el modal aquí
-    console.log('Ticket seleccionado:', ticket);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedTicket(null);
   };
 
   const handleFilterChange = (key, value) => {
@@ -92,17 +97,16 @@ export default function MapView() {
       <div className="page-header">
         <div>
           <h1 className="page-title">
-            <Icon icon="fluent-emoji-flat:world-map" />
-            {' '}Mapa Interactivo
+            <Icon icon="fluent-emoji-flat:world-map" /> Mapa Interactivo
           </h1>
           <p className="page-subtitle">
             Visualiza los puntos sucios en tiempo real
           </p>
         </div>
         <div className="page-header-actions">
-          <Button 
-            variant="ghost" 
-            icon={<Icon icon="fluent-color:arrow-sync-16" />} 
+          <Button
+            variant="ghost"
+            icon={<Icon icon="fluent-color:arrow-sync-16" />}
             onClick={refreshTickets}
           >
             Actualizar
@@ -124,14 +128,16 @@ export default function MapView() {
       <div className="map-stats-bar">
         <div className="map-stats-summary">
           <span className="stats-total">
-            <Icon icon="fluent-color:calendar-data-bar-16" />
-            {' '}<strong>{tickets.length}</strong> ticket
+            <Icon icon="fluent-color:calendar-data-bar-16" />{" "}
+            <strong>{tickets.length}</strong> ticket
             {tickets.length !== 1 ? "s" : ""} encontrado
             {tickets.length !== 1 ? "s" : ""}
           </span>
 
           {filters.status && (
-            <Badge variant={STATUS_CONFIG[filters.status]?.variant || "default"}>
+            <Badge
+              variant={STATUS_CONFIG[filters.status]?.variant || "default"}
+            >
               {STATUS_CONFIG[filters.status]?.label || filters.status}
             </Badge>
           )}
@@ -143,8 +149,7 @@ export default function MapView() {
         <div className="map-sidebar">
           <Card>
             <h3 className="card-title">
-              <Icon icon="fluent-color:calendar-data-bar-16" />
-              {' '}Estadísticas
+              <Icon icon="fluent-color:calendar-data-bar-16" /> Estadísticas
             </h3>
             <div className="map-stats-detail">
               {Object.entries(STATUS_CONFIG).map(([status, config]) => {
@@ -184,14 +189,23 @@ export default function MapView() {
             <Loader text="Cargando mapa..." />
           ) : (
             <MapContainer>
-              <MapMarkersGroup 
-                tickets={tickets} 
+              <MapMarkersGroup
+                tickets={tickets}
                 onMarkerClick={handleMarkerClick}
               />
             </MapContainer>
           )}
         </div>
       </div>
+
+      {/* Modal de Ticket */}
+      {selectedTicket && (
+        <TicketMapModal
+          ticket={selectedTicket}
+          onClose={handleCloseModal}
+          users={users}
+        />
+      )}
     </div>
   );
 }
