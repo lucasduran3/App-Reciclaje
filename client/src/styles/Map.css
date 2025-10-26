@@ -218,6 +218,34 @@
   color: var(--text-secondary);
 }
 
+/* Custom Marker Styles */
+.custom-marker-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover {
+  transform: scale(1.15);
+  z-index: 1000 !important;
+}
+
+/* Animación para tickets urgentes */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.6);
+  }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .map-container {

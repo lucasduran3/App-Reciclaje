@@ -14,6 +14,7 @@ import Button from "../components/common/Button";
 import Loader from "../components/common/Loader";
 import MapContainer from "../components/map/MapContainer";
 import MapLegend from "../components/map/MapLegend";
+import MapMarkersGroup from "../components/map/MapMarkersGroup";
 
 const STATUS_CONFIG = {
   reported: {
@@ -57,7 +58,14 @@ const STATUS_CONFIG = {
 export default function MapView() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({});
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const { tickets, loading, refreshTickets } = useTickets(filters);
+
+  const handleMarkerClick = (ticket) => {
+    setSelectedTicket(ticket);
+    // En el Paso 4 abriremos el modal aquí
+    console.log('Ticket seleccionado:', ticket);
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => {
@@ -176,7 +184,10 @@ export default function MapView() {
             <Loader text="Cargando mapa..." />
           ) : (
             <MapContainer>
-              {/* Aquí irán los marcadores en el Paso 3 */}
+              <MapMarkersGroup 
+                tickets={tickets} 
+                onMarkerClick={handleMarkerClick}
+              />
             </MapContainer>
           )}
         </div>
