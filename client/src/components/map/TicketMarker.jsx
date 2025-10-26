@@ -131,6 +131,7 @@ export default function TicketMarker({ ticket, onClick, currentZoom = 13 }) {
     <Marker
       position={position}
       icon={icon}
+      ticketStatus={ticket.status} // Para clustering
       eventHandlers={{
         click: () => onClick && onClick(ticket),
       }}
