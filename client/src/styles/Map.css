@@ -177,7 +177,7 @@
 }
 
 /* Instrucciones */
-.map-instructions {
+.mapview-instructions {
   list-style: none;
   padding: 0;
   margin: var(--spacing-md) 0 0;
@@ -186,7 +186,7 @@
   gap: var(--spacing-sm);
 }
 
-.map-instructions li {
+.mapview-instructions li {
   font-size: 0.875rem;
   color: var(--text-secondary);
   padding: var(--spacing-xs) 0;
