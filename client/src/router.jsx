@@ -1,3 +1,8 @@
+/**
+ * Router Update - Add /tickets/new route
+ * client/src/router.jsx
+ */
+
 import React from "react";
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "./components/layout/Layout";
@@ -8,8 +13,10 @@ import Missions from "./pages/Missions";
 import Leaderboard from "./pages/Leaderboard";
 import UserProfile from "./pages/UserProfile";
 import TicketDetail from "./pages/TicketDetail";
+import NewTicket from "./pages/NewTicket";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +29,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -47,6 +58,10 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <UserProfile />,
+      },
+      {
+        path: "tickets/new",
+        element: <NewTicket />,
       },
       {
         path: "tickets/:id",

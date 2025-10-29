@@ -3,6 +3,7 @@
  */
 
 import supabaseService from "../services/supabaseService.js";
+import supabase from '../config/supabase.js';
 import {
   validateTicket,
   validateTicketStatusTransition,

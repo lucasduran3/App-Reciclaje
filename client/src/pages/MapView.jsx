@@ -124,7 +124,7 @@ export default function MapView() {
       {/* Filtros */}
       <TicketFilters filters={filters} onFilterChange={handleFilterChange} />
 
-      {/* Estadísticas de tickets filtrados */}
+      {/* Estadísticas de tickets filtrados 
       <div className="map-stats-bar">
         <div className="map-stats-summary">
           <span className="stats-total">
@@ -143,6 +143,7 @@ export default function MapView() {
           )}
         </div>
       </div>
+      */}
 
       <div className="map-container">
         {/* Sidebar con leyenda y estadísticas */}
