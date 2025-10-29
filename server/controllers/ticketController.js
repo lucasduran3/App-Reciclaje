@@ -3,6 +3,7 @@
  */
 
 import supabaseService from "../services/supabaseService.js";
+import supabase from '../config/supabase.js';
 import {
   validateTicket,
   validateTicketStatusTransition,
@@ -647,6 +648,261 @@ class TicketController {
       });
     } catch (error) {
       next(error);
+    }
+  }
+
+  /**
+   * POST /api/tickets
+   * Crea un nuevo ticket con upload de imagen a Supabase Storage
+   */
+  async create(req, res, next) {
+    try {
+      // Obtener userId del token (implementar middleware de auth)
+      const userId = req.user?.id || req.body.reported_by;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Usuario no autenticado",
+        });
+      }
+
+      const ticketData = req.body;
+
+      // Validaciones básicas
+      const validationErrors = [];
+
+      // Title
+      if (
+        !ticketData.title ||
+        ticketData.title.length < 5 ||
+        ticketData.title.length > 120
+      ) {
+        validationErrors.push("El título debe tener entre 5 y 120 caracteres");
+      }
+
+      // Description
+      if (
+        !ticketData.description ||
+        ticketData.description.length < 10 ||
+        ticketData.description.length > 2000
+      ) {
+        validationErrors.push(
+          "La descripción debe tener entre 10 y 2000 caracteres"
+        );
+      }
+
+      // Zone
+      const validZones = ["Centro", "Norte", "Sur", "Este", "Oeste"];
+      if (!ticketData.zone || !validZones.includes(ticketData.zone)) {
+        validationErrors.push("Zona inválida");
+      }
+
+      // Type
+      const validTypes = [
+        "general",
+        "recyclable",
+        "organic",
+        "electronic",
+        "hazardous",
+        "bulky",
+      ];
+      if (!ticketData.type || !validTypes.includes(ticketData.type)) {
+        validationErrors.push("Tipo de residuo inválido");
+      }
+
+      // Priority
+      const validPriorities = ["low", "medium", "high", "urgent"];
+      if (
+        !ticketData.priority ||
+        !validPriorities.includes(ticketData.priority)
+      ) {
+        validationErrors.push("Prioridad inválida");
+      }
+
+      // Estimated Size
+      const validSizes = ["small", "medium", "large", "xlarge"];
+      if (
+        !ticketData.estimated_size ||
+        !validSizes.includes(ticketData.estimated_size)
+      ) {
+        validationErrors.push("Tamaño estimado inválido");
+      }
+
+      // Location
+      if (
+        !ticketData.location ||
+        !ticketData.location.lat ||
+        !ticketData.location.lng
+      ) {
+        validationErrors.push("Ubicación es requerida (coordenadas)");
+      } else {
+        const lat = parseFloat(ticketData.location.lat);
+        const lng = parseFloat(ticketData.location.lng);
+
+        if (
+          isNaN(lat) ||
+          isNaN(lng) ||
+          lat < -90 ||
+          lat > 90 ||
+          lng < -180 ||
+          lng > 180
+        ) {
+          validationErrors.push("Coordenadas inválidas");
+        }
+      }
+
+      // Address
+      if (!ticketData.address || ticketData.address.trim().length < 5) {
+        validationErrors.push("Dirección es requerida (mínimo 5 caracteres)");
+      }
+
+      // Photo validation (debe venir como base64 o URL ya subida)
+      if (!ticketData.photo_before) {
+        validationErrors.push('Foto "antes" es requerida');
+      }
+
+      // Si hay errores, retornar
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          errors: validationErrors,
+        });
+      }
+
+      // Verificar que el usuario existe
+      const user = await supabaseService.getById("profiles", userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: "Usuario no encontrado",
+        });
+      }
+
+      // Subir foto a Supabase Storage
+      let photoUrl;
+
+      if (ticketData.photo_before.startsWith("data:")) {
+        // Es base64, necesitamos subirla
+        photoUrl = await this.uploadPhotoToStorage(
+          ticketData.photo_before,
+          userId
+        );
+      } else if (ticketData.photo_before.startsWith("http")) {
+        // Ya es una URL (foto ya subida)
+        photoUrl = ticketData.photo_before;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "Formato de foto inválido",
+        });
+      }
+
+      // Crear ticket en la base de datos
+      const newTicket = {
+        title: ticketData.title.trim(),
+        description: ticketData.description.trim(),
+        location: `(${ticketData.location.lat},${ticketData.location.lng})`, // PostGIS point
+        address: ticketData.address.trim(),
+        zone: ticketData.zone,
+        type: ticketData.type,
+        priority: ticketData.priority,
+        estimated_size: ticketData.estimated_size,
+        status: "reported",
+        reported_by: userId,
+        photos_before: [photoUrl], // Array de URLs
+        interactions: {
+          likes: 0,
+          comments: 0,
+          views: 0,
+          liked_by: [],
+        },
+      };
+
+      const createdTicket = await supabaseService.create("tickets", newTicket);
+
+      // Actualizar stats del usuario
+      const stats = user.stats || {};
+      stats.tickets_reported = (stats.tickets_reported || 0) + 1;
+      await supabaseService.update("profiles", userId, { stats });
+
+      // Dar puntos al reportante (50 puntos)
+      await supabaseService.update("profiles", userId, {
+        points: user.points + 50,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Ticket creado exitosamente",
+        data: createdTicket,
+      });
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      next(error);
+    }
+  }
+
+  /**
+   * Sube una foto a Supabase Storage
+   * @param {string} base64Data - Imagen en base64
+   * @param {string} userId - ID del usuario
+   * @returns {Promise<string>} URL pública de la imagen
+   */
+  async uploadPhotoToStorage(base64Data, userId) {
+    try {
+      // Extraer el tipo de imagen y los datos
+      const matches = base64Data.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+
+      if (!matches || matches.length !== 3) {
+        throw new Error("Formato de imagen base64 inválido");
+      }
+
+      const imageType = matches[1]; // jpeg, png, webp
+      const base64Content = matches[2];
+
+      // Validar tipo de imagen
+      const validTypes = ["jpeg", "jpg", "png", "webp"];
+      if (!validTypes.includes(imageType.toLowerCase())) {
+        throw new Error("Tipo de imagen no permitido. Usa JPG, PNG o WebP");
+      }
+
+      // Convertir base64 a Buffer
+      const imageBuffer = Buffer.from(base64Content, "base64");
+
+      // Validar tamaño (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (imageBuffer.length > maxSize) {
+        throw new Error("La imagen excede el tamaño máximo de 5MB");
+      }
+
+      // Generar nombre único para la imagen
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 9);
+      const fileName = `${userId}/${timestamp}-${randomStr}.${imageType}`;
+
+      // Subir a Supabase Storage (bucket: ticket-photos)
+      const { data, error } = await supabase.storage
+        .from("ticket-photos")
+        .upload(fileName, imageBuffer, {
+          contentType: `image/${imageType}`,
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Error uploading to storage:", error);
+        throw new Error(`Error al subir imagen: ${error.message}`);
+      }
+
+      // Obtener URL pública
+      const { data: urlData } = supabase.storage
+        .from("ticket-photos")
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Error in uploadPhotoToStorage:", error);
+      throw error;
     }
   }
 }
