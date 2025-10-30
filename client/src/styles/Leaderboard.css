@@ -5,6 +5,7 @@
 .leaderboard-table table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .leaderboard-table th {
@@ -16,6 +17,7 @@
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .leaderboard-table td {
@@ -42,6 +44,9 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
 }
 
 .col-position {
@@ -58,6 +63,7 @@
   flex-wrap: wrap;
   margin-bottom: var(--spacing-xl);
 }
+
 .current-user-card {
   background: linear-gradient(
     135deg,
@@ -66,41 +72,54 @@
   );
   margin-bottom: var(--spacing-xl);
 }
+
 .current-user-position {
   display: flex;
   align-items: center;
   gap: var(--spacing-2xl);
   margin-top: var(--spacing-lg);
 }
+
 .position-rank {
   text-align: center;
+  flex-shrink: 0;
 }
+
 .rank-number {
   font-size: 3rem;
   font-weight: bold;
   color: var(--primary);
   display: block;
+  line-height: 1;
 }
+
 .rank-label {
   font-size: 0.875rem;
   color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
 }
+
 .position-details {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
   flex: 1;
+  min-width: 0;
 }
+
 .position-info h4 {
   font-size: 1.5rem;
   margin-bottom: var(--spacing-sm);
   color: var(--text);
+  word-break: break-word;
 }
+
 .position-stats {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
+
 .podium {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -108,34 +127,309 @@
   align-items: end;
   margin-bottom: var(--spacing-2xl);
 }
+
 .podium-card {
   text-align: center;
   padding: var(--spacing-xl);
   position: relative;
 }
+
 .podium-first {
   order: 2;
   transform: scale(1.1);
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  z-index: 1;
 }
+
 .podium-second {
   order: 1;
 }
+
 .podium-third {
   order: 3;
 }
+
 .podium-medal {
   font-size: 3rem;
   margin-bottom: var(--spacing-md);
 }
+
 .podium-card h4 {
   margin: var(--spacing-md) 0;
   font-size: 1.125rem;
+  word-break: break-word;
 }
+
 .podium-crown {
   position: absolute;
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 2rem;
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .leaderboard-table table {
+    min-width: 550px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: var(--spacing-sm);
+  }
+
+  .leaderboard-table th {
+    font-size: 0.8125rem;
+  }
+
+  .col-position {
+    font-size: 1.125rem;
+  }
+
+  .current-user-position {
+    gap: var(--spacing-xl);
+  }
+
+  .rank-number {
+    font-size: 2.5rem;
+  }
+
+  .position-info h4 {
+    font-size: 1.375rem;
+  }
+
+  .podium {
+    gap: var(--spacing-md);
+  }
+
+  .podium-card {
+    padding: var(--spacing-lg);
+  }
+
+  .podium-medal {
+    font-size: 2.5rem;
+  }
+
+  .podium-first {
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .leaderboard-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .leaderboard-filters .btn {
+    flex-shrink: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  .current-user-card {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .current-user-position {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-lg);
+  }
+
+  .position-rank {
+    width: 100%;
+  }
+
+  .rank-number {
+    font-size: 2rem;
+  }
+
+  .rank-label {
+    font-size: 0.8125rem;
+  }
+
+  .position-details {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-md);
+  }
+
+  .position-info h4 {
+    font-size: 1.25rem;
+  }
+
+  .position-stats {
+    justify-content: center;
+  }
+
+  /* Tabla más compacta */
+  .leaderboard-table {
+    font-size: 0.875rem;
+  }
+
+  .leaderboard-table table {
+    min-width: 500px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: var(--spacing-sm);
+  }
+
+  .leaderboard-table th {
+    font-size: 0.75rem;
+  }
+
+  .user-cell {
+    gap: var(--spacing-sm);
+  }
+
+  .col-position {
+    width: 50px;
+    font-size: 1rem;
+  }
+
+  /* Ocultar columna zona en móvil */
+  .col-zone {
+    display: none;
+  }
+
+  /* Podium apilado */
+  .podium {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .podium-first,
+  .podium-second,
+  .podium-third {
+    order: initial;
+    transform: scale(1);
+  }
+
+  .podium-card {
+    padding: var(--spacing-md);
+  }
+
+  .podium-medal {
+    font-size: 2rem;
+  }
+
+  .podium-card h4 {
+    font-size: 1rem;
+  }
+
+  .podium-crown {
+    display: none;
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .leaderboard-filters .btn {
+    font-size: 0.8125rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .current-user-position {
+    gap: var(--spacing-md);
+  }
+
+  .rank-number {
+    font-size: 1.75rem;
+  }
+
+  .rank-label {
+    font-size: 0.75rem;
+  }
+
+  .position-info h4 {
+    font-size: 1.125rem;
+  }
+
+  .position-stats .badge {
+    font-size: 0.75rem;
+    padding: 0.125rem var(--spacing-xs);
+  }
+
+  .leaderboard-table {
+    font-size: 0.8125rem;
+  }
+
+  .leaderboard-table table {
+    min-width: 450px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .leaderboard-table th {
+    font-size: 0.7rem;
+  }
+
+  .col-position {
+    width: 40px;
+    font-size: 0.9375rem;
+  }
+
+  .user-cell {
+    gap: var(--spacing-xs);
+  }
+
+  /* Avatar más pequeño en tabla */
+  .leaderboard-table .avatar-small {
+    width: 28px;
+    height: 28px;
+  }
+
+  .podium {
+    gap: var(--spacing-sm);
+  }
+
+  .podium-card {
+    padding: var(--spacing-sm);
+  }
+
+  .podium-medal {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .podium-card h4 {
+    font-size: 0.9375rem;
+    margin: var(--spacing-sm) 0;
+  }
+
+  .podium-card .badge {
+    font-size: 0.75rem;
+    padding: 0.125rem var(--spacing-xs);
+  }
+}
+
+/* Scrollbar para filters y tabla */
+@media (max-width: 768px) {
+  .leaderboard-filters::-webkit-scrollbar,
+  .leaderboard-table::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .leaderboard-filters::-webkit-scrollbar-track,
+  .leaderboard-table::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  .leaderboard-filters::-webkit-scrollbar-thumb,
+  .leaderboard-table::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+  }
 }

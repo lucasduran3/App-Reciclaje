@@ -19,26 +19,95 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-md);
 }
 
 .header-brand {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .header-logo {
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .header-user {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  min-width: 0;
 }
 
 .header-stats {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .header-content {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  .header-logo {
+    font-size: 1.25rem;
+  }
+
+  .header-user {
+    gap: var(--spacing-sm);
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .header-content {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* Ocultar stats en móvil para ahorrar espacio */
+  .header-stats {
+    display: none;
+  }
+
+  .header-logo {
+    font-size: 1.125rem;
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .header-content {
+    padding: var(--spacing-sm);
+  }
+
+  .header-logo {
+    font-size: 1rem;
+  }
+
+  /* Iconos más pequeños en el logo */
+  .header-logo svg,
+  .header-logo [data-icon] {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+/* Fix para el dropdown del usuario en móvil */
+@media (max-width: 768px) {
+  .header-user > div:last-child > div:last-child {
+    /* Modal dropdown del usuario */
+    right: var(--spacing-sm);
+    left: var(--spacing-sm);
+    width: auto;
+    min-width: auto;
+  }
 }

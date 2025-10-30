@@ -6,6 +6,12 @@
 
 .ticket-card {
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.ticket-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .ticket-card-header {
@@ -13,17 +19,22 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .ticket-card-status {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .ticket-card-title {
   font-size: 1.125rem;
   margin-bottom: var(--spacing-sm);
   color: var(--text);
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .ticket-card-description {
@@ -31,6 +42,11 @@
   font-size: 0.875rem;
   margin-bottom: var(--spacing-md);
   line-height: 1.5;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .ticket-card-meta {
@@ -39,6 +55,15 @@
   font-size: 0.875rem;
   color: var(--text-muted);
   margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.ticket-card-zone,
+.ticket-card-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .ticket-card-footer {
@@ -47,11 +72,15 @@
   gap: var(--spacing-sm);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .ticket-card-reporter {
   font-size: 0.875rem;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .ticket-card-interactions {
@@ -62,4 +91,111 @@
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--border);
   margin-top: var(--spacing-md);
+}
+
+.ticket-card-interactions span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .ticket-list {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+  }
+  
+  .ticket-card-title {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .ticket-list {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .ticket-card {
+    padding: var(--spacing-md);
+  }
+  
+  .ticket-card-header {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .ticket-card-title {
+    font-size: 0.9375rem;
+  }
+  
+  .ticket-card-description {
+    font-size: 0.8125rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .ticket-card-meta {
+    font-size: 0.8125rem;
+  }
+  
+  .ticket-card-footer {
+    padding-top: var(--spacing-sm);
+  }
+  
+  .ticket-card-interactions {
+    gap: var(--spacing-md);
+    font-size: 0.8125rem;
+    padding-top: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* No hover en touch */
+  .ticket-card:hover {
+    transform: none;
+  }
+  
+  /* Active state para feedback táctil */
+  .ticket-card:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow);
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .ticket-list {
+    gap: var(--spacing-sm);
+  }
+  
+  .ticket-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .ticket-card-title {
+    font-size: 0.875rem;
+  }
+  
+  .ticket-card-description {
+    font-size: 0.75rem;
+  }
+  
+  .ticket-card-meta,
+  .ticket-card-interactions {
+    font-size: 0.75rem;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Badges más pequeños */
+  .ticket-card-status .badge {
+    font-size: 0.7rem;
+    padding: 0.125rem var(--spacing-xs);
+  }
+  
+  /* Iconos más pequeños */
+  .ticket-card-interactions svg,
+  .ticket-card-meta svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
 }
