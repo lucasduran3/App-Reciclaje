@@ -11,6 +11,9 @@
   cursor: pointer;
   transition: var(--transition);
   text-decoration: none;
+  white-space: nowrap;
+  min-height: 40px;
+  line-height: 1.5;
 }
 
 .btn:disabled {
@@ -64,16 +67,19 @@
 .btn-small {
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: 0.875rem;
+  min-height: 32px;
 }
 
 .btn-medium {
   padding: var(--spacing-md) var(--spacing-lg);
   font-size: 1rem;
+  min-height: 40px;
 }
 
 .btn-large {
   padding: var(--spacing-lg) var(--spacing-xl);
   font-size: 1.125rem;
+  min-height: 48px;
 }
 
 .btn-full-width {
@@ -87,4 +93,118 @@
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .btn {
+    font-size: 0.9375rem;
+  }
+  
+  .btn-large {
+    font-size: 1.0625rem;
+  }
+}
+
+/* Mobile (768px) - Touch targets más grandes */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px; /* Estándar de accesibilidad táctil */
+    font-size: 0.9375rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .btn-small {
+    min-height: 40px;
+    font-size: 0.875rem;
+  }
+  
+  .btn-large {
+    min-height: 48px;
+    font-size: 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  /* Botones en grupos de acciones */
+  .page-header-actions .btn,
+  .modal-footer .btn,
+  .ticket-card-footer .btn {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Grupos de botones apilados en móvil */
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+  }
+  
+  .button-group .btn {
+    width: 100%;
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .btn {
+    font-size: 0.875rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+  
+  .btn-large {
+    font-size: 0.9375rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  /* Iconos más pequeños en móvil pequeño */
+  .btn-icon svg,
+  .btn-icon [data-icon] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  
+  .btn-large .btn-icon svg,
+  .btn-large .btn-icon [data-icon] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* Fix para botones con solo icono en móvil */
+@media (max-width: 768px) {
+  .btn:not(:has(.btn-icon + *)):has(.btn-icon) {
+    /* Botones que solo tienen icono */
+    padding: var(--spacing-sm);
+    height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Accesibilidad táctil mejorada */
+@media (hover: none) and (pointer: coarse) {
+  /* Dispositivos táctiles */
+  .btn {
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .btn:active {
+    transform: scale(0.98);
+  }
 }

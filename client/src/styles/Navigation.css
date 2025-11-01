@@ -1,3 +1,4 @@
+/* Navigation - Desktop */
 .navigation {
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -7,6 +8,7 @@
   top: 0;
   height: calc(100vh);
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .nav-list {
@@ -42,11 +44,122 @@
   color: var(--primary-dark);
 }
 
+.nav-link-highlight {
+  background: var(--primary);
+  color: white;
+}
+
+.nav-link-highlight:hover {
+  background: var(--primary-dark);
+}
+
 .nav-icon {
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .nav-label {
   flex: 1;
 }
 
+/* Tablet (1024px) - Navigation horizontal arriba */
+@media (max-width: 1024px) {
+  .navigation {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: var(--spacing-md);
+    position: static;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    gap: var(--spacing-xs);
+    justify-content: flex-start;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    min-width: 80px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .nav-icon {
+    font-size: 1.5rem;
+  }
+
+  .nav-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile (768px) - Navigation más compacta */
+@media (max-width: 768px) {
+  .navigation {
+    padding: var(--spacing-sm);
+  }
+
+  .nav-list {
+    gap: 0;
+  }
+
+  .nav-link {
+    min-width: 70px;
+    padding: var(--spacing-sm) var(--spacing-xs);
+  }
+
+  .nav-icon {
+    font-size: 1.25rem;
+  }
+
+  .nav-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* Mobile pequeño (480px) - Solo iconos con labels muy pequeños */
+@media (max-width: 480px) {
+  .navigation {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .nav-link {
+    min-width: 60px;
+    padding: var(--spacing-xs);
+    gap: 0.25rem;
+  }
+
+  .nav-icon {
+    font-size: 1.125rem;
+  }
+
+  .nav-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* Fix para scroll horizontal en móvil */
+@media (max-width: 1024px) {
+  .navigation::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .navigation::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  .navigation::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+  }
+
+  .navigation::-webkit-scrollbar-thumb:hover {
+    background: var(--border-dark);
+  }
+}

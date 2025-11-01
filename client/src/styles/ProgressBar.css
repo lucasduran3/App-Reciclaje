@@ -8,6 +8,20 @@
   margin-bottom: var(--spacing-sm);
   font-size: 0.875rem;
   color: var(--text-secondary);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.progress-label span:first-child {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.progress-percentage {
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
 }
 
 .progress {
@@ -39,6 +53,7 @@
   color: white;
   font-size: 0.75rem;
   font-weight: bold;
+  border-radius: var(--radius-full);
 }
 
 .progress-bar-primary {
@@ -59,4 +74,66 @@
 
 .progress-text {
   white-space: nowrap;
+  font-size: 0.7rem;
+  padding: 0 var(--spacing-xs);
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .progress-label {
+    font-size: 0.8125rem;
+  }
+
+  .progress-large {
+    height: 16px;
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .progress-label {
+    font-size: 0.75rem;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .progress-small {
+    height: 6px;
+  }
+
+  .progress-medium {
+    height: 12px;
+  }
+
+  .progress-large {
+    height: 14px;
+  }
+
+  .progress-text {
+    font-size: 0.65rem;
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .progress-label {
+    font-size: 0.7rem;
+  }
+
+  .progress-small {
+    height: 5px;
+  }
+
+  .progress-medium {
+    height: 10px;
+  }
+
+  .progress-large {
+    height: 12px;
+  }
+
+  /* Ocultar texto interno en barras pequeñas en móvil */
+  .progress-small .progress-text,
+  .progress-medium .progress-text {
+    display: none;
+  }
 }

@@ -27,7 +27,9 @@ export default function Home() {
     return <Loader fullScreen text="Cargando..." />;
   }
 
-  const activeMissions = missions.filter((m) => !m.completed && new Date(m.expiredAt)).slice(0, 3);
+  const activeMissions = missions
+    .filter((m) => !m.completed && new Date(m.expiredAt))
+    .slice(0, 3);
   const recentTickets = tickets.slice(0, 3);
 
   return (
@@ -117,7 +119,9 @@ export default function Home() {
       {/* Active Missions */}
       <section className="home-section">
         <div className="section-header">
-          <h2 className="section-title"><Icon icon="fluent-color:pin-48"></Icon> Misiones Activas</h2>
+          <h2 className="section-title">
+            <Icon icon="fluent-color:pin-48"></Icon> Misiones Activas
+          </h2>
           <Link to="/missions" className="section-link">
             Ver todas →
           </Link>
@@ -142,7 +146,9 @@ export default function Home() {
       {/* Recent Tickets */}
       <section className="home-section">
         <div className="section-header">
-          <h2 className="section-title"><Icon icon="fluent-color:news-28"></Icon> Tickets Recientes</h2>
+          <h2 className="section-title">
+            <Icon icon="fluent-color:news-28"></Icon> Tickets Recientes
+          </h2>
           <Link to="/feed" className="section-link">
             Ver todos →
           </Link>
@@ -169,7 +175,9 @@ export default function Home() {
       {/* User Progress */}
       <section className="home-section">
         <Card>
-          <h3 className="card-section-title"><Icon icon="fluent-color:data-trending-48"></Icon> Tu Progreso</h3>
+          <h3 className="card-section-title">
+            <Icon icon="fluent-color:data-trending-48"></Icon> Tu Progreso
+          </h3>
           <div className="progress-section">
             <ProgressBar
               current={currentUser.stats.ticketsReported}

@@ -16,18 +16,21 @@
 .ticketD-header .ticketD-title h1 {
   word-break: break-word;
   flex: 1;
+  min-width: 0;
 }
 
 .ticketD-header .ticketD-title .badge-container {
   display: flex;
   gap: var(--spacing-sm);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .ticketD-header .description {
   color: var(--text-secondary);
   margin-bottom: var(--spacing-lg);
   line-height: 1.6;
+  word-break: break-word;
 }
 
 .ticketD-header .date-location-container {
@@ -93,6 +96,12 @@
   border-radius: var(--radius);
   cursor: pointer;
   flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.ticketD-photo-container .carousell-miniature:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
 }
 
 .ticketD-participants-grid {
@@ -121,12 +130,14 @@
   background: var(--bg);
   border-radius: var(--radius);
   color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .comments-section .no-comments {
   color: var(--text-secondary);
   text-align: center;
   padding: var(--spacing-lg);
+  font-size: 0.875rem;
 }
 
 .comments-section .comments-container {
@@ -153,6 +164,7 @@
   justify-content: space-between;
   margin-bottom: var(--spacing-xs);
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .comments-section .comment-date {
@@ -166,6 +178,7 @@
   line-height: 1.5;
   margin: 0;
   word-break: break-word;
+  font-size: 0.9375rem;
 }
 
 .ticketD-sidebar-container {
@@ -190,4 +203,173 @@
   justify-content: space-between;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px solid var(--border);
+  gap: var(--spacing-sm);
+}
+
+.ticketD-info-line:last-child {
+  border-bottom: none;
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .ticketD-page-container {
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: var(--spacing-lg);
+  }
+
+  .ticketD-photo-container .current-photo {
+    height: 350px;
+  }
+
+  .ticketD-photo-container .carousell-miniature {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+/* Mobile (768px) - Stack layout */
+@media (max-width: 768px) {
+  .ticketD-page-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .ticketD-sidebar-container {
+    position: static;
+    order: 2;
+  }
+
+  .ticketD-header .ticketD-title h1 {
+    font-size: 1.25rem;
+  }
+
+  .ticketD-header .description {
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .ticketD-header .date-location-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+  }
+
+  .ticketD-photo-container .current-photo {
+    height: 300px;
+  }
+
+  .ticketD-photo-container .carousell {
+    gap: var(--spacing-xs);
+  }
+
+  .ticketD-photo-container .carousell-miniature {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ticketD-photo-container .carousell-miniature:hover {
+    transform: none;
+  }
+
+  .ticketD-participants-grid {
+    gap: var(--spacing-sm);
+  }
+
+  .ticketD-participants-grid .participant-card {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .comments-section .comment-card {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .comments-section .comment-content {
+    font-size: 0.875rem;
+  }
+
+  .ticketD-sidebar-container .aditional-info-card {
+    margin-top: var(--spacing-md);
+  }
+
+  .ticketD-info-line {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .ticketD-page-container {
+    gap: var(--spacing-sm);
+  }
+
+  .ticketD-header .ticketD-title {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .ticketD-header .ticketD-title h1 {
+    font-size: 1.125rem;
+  }
+
+  .ticketD-header .badge-container {
+    width: 100%;
+  }
+
+  .ticketD-header .description {
+    font-size: 0.8125rem;
+  }
+
+  .ticketD-header .location-title,
+  .ticketD-header .date-title {
+    font-size: 0.75rem;
+  }
+
+  .ticketD-photo-container .current-photo {
+    height: 250px;
+    border-radius: var(--radius-sm);
+  }
+
+  .ticketD-photo-container .carousell-miniature {
+    width: 50px;
+    height: 50px;
+  }
+
+  .comments-section .comment-card {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .comments-section .comment-content {
+    font-size: 0.8125rem;
+  }
+
+  .comments-section .comment-date {
+    font-size: 0.7rem;
+  }
+
+  .ticketD-info-line {
+    font-size: 0.75rem;
+    padding: var(--spacing-xs) 0;
+  }
+}
+
+/* Scrollbar para carrusel */
+.ticketD-photo-container .carousell::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ticketD-photo-container .carousell::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: var(--radius-full);
+}
+
+.ticketD-photo-container .carousell::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.ticketD-photo-container .carousell::-webkit-scrollbar-thumb:hover {
+  background: var(--border-dark);
 }

@@ -16,4 +16,26 @@
   flex: 1;
   padding: var(--spacing-xl);
   overflow-y: auto;
+  width: 100%;
+  min-width: 0; /* Previene overflow en flex children */
+}
+
+/* Tablet - Navigation arriba */
+@media (max-width: 1024px) {
+  .layout-container {
+    flex-direction: column;
+  }
+}
+
+/* Mobile - Padding reducido */
+@media (max-width: 768px) {
+  .layout-main {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-main {
+    padding: var(--spacing-sm);
+  }
 }
