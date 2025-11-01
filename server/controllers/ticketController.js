@@ -684,7 +684,7 @@ class TicketController {
       // Description
       if (
         !ticketData.description ||
-        ticketData.description.length < 10 ||
+        ticketData.description.length < 20 ||
         ticketData.description.length > 2000
       ) {
         validationErrors.push(

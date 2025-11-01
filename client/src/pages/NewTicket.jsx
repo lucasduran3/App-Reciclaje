@@ -77,8 +77,8 @@ export default function NewTicket() {
 
     switch (name) {
       case "title":
-        if (!value || value.length < 5) {
-          newErrors.title = "El título debe tener al menos 5 caracteres";
+        if (!value || value.length < 10) {
+          newErrors.title = "El título debe tener al menos 10 caracteres";
         } else if (value.length > 120) {
           newErrors.title = "El título no puede exceder 120 caracteres";
         } else {
@@ -87,9 +87,9 @@ export default function NewTicket() {
         break;
 
       case "description":
-        if (!value || value.length < 10) {
+        if (!value || value.length < 20) {
           newErrors.description =
-            "La descripción debe tener al menos 10 caracteres";
+            "La descripción debe tener al menos 20 caracteres";
         } else if (value.length > 2000) {
           newErrors.description =
             "La descripción no puede exceder 2000 caracteres";
@@ -169,19 +169,19 @@ export default function NewTicket() {
 
     if (
       !formData.title ||
-      formData.title.length < 5 ||
+      formData.title.length < 10 ||
       formData.title.length > 120
     ) {
-      newErrors.title = "El título debe tener entre 5 y 120 caracteres";
+      newErrors.title = "El título debe tener entre 10 y 120 caracteres";
     }
 
     if (
       !formData.description ||
-      formData.description.length < 10 ||
+      formData.description.length < 20 ||
       formData.description.length > 2000
     ) {
       newErrors.description =
-        "La descripción debe tener entre 10 y 2000 caracteres";
+        "La descripción debe tener entre 20 y 2000 caracteres";
     }
 
     if (!formData.zone) {
