@@ -5,6 +5,12 @@
 
 .mission-card {
   border-left: 4px solid var(--primary);
+  transition: var(--transition);
+}
+
+.mission-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
 }
 
 .mission-completed {
@@ -17,26 +23,33 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
 }
 
 .mission-icon {
   font-size: 2rem;
+  flex-shrink: 0;
 }
 
 .mission-badges {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .mission-title {
   font-size: 1.25rem;
   margin-bottom: var(--spacing-sm);
   color: var(--text);
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .mission-description {
   color: var(--text-secondary);
   margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+  font-size: 0.9375rem;
 }
 
 .mission-footer {
@@ -46,38 +59,210 @@
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--border);
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.mission-reward {
+  flex: 1;
 }
 
 .mission-points {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   font-weight: 600;
   color: var(--primary);
+  font-size: 1rem;
+}
+
+.mission-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .mission-timer {
   display: flex;
-  gap: 0.2rem;
+  gap: 0.25rem;
   align-items: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
 
-.mission-timer svg, .mission-points svg {
+.mission-timer svg,
+.mission-points svg {
   font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
-/*Mission Page*/
+/* Mission Page */
 .missions-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-2xl);
 }
+
 .missions-filters {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
   margin-bottom: var(--spacing-xl);
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .missions-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  .mission-title {
+    font-size: 1.125rem;
+  }
+
+  .mission-description {
+    font-size: 0.875rem;
+  }
+
+  .mission-icon {
+    font-size: 1.75rem;
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .mission-list {
+    gap: var(--spacing-md);
+  }
+
+  .mission-card {
+    padding: var(--spacing-md);
+  }
+
+  .mission-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .mission-icon {
+    font-size: 1.5rem;
+  }
+
+  .mission-title {
+    font-size: 1rem;
+  }
+
+  .mission-description {
+    font-size: 0.8125rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .mission-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .mission-points {
+    font-size: 0.9375rem;
+  }
+
+  .mission-timer {
+    font-size: 0.8125rem;
+  }
+
+  .missions-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .missions-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: var(--spacing-xs);
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .missions-filters .btn {
+    flex-shrink: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  /* No hover en touch */
+  .mission-card:hover {
+    transform: none;
+  }
+
+  .mission-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Mobile pequeño (480px) */
+@media (max-width: 480px) {
+  .mission-card {
+    padding: var(--spacing-sm);
+    border-left-width: 3px;
+  }
+
+  .mission-icon {
+    font-size: 1.25rem;
+  }
+
+  .mission-title {
+    font-size: 0.9375rem;
+  }
+
+  .mission-description {
+    font-size: 0.75rem;
+  }
+
+  .mission-footer {
+    padding-top: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  .mission-points {
+    font-size: 0.875rem;
+  }
+
+  .mission-timer {
+    font-size: 0.75rem;
+  }
+
+  .mission-points svg,
+  .mission-timer svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .missions-stats {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .missions-filters .btn {
+    font-size: 0.8125rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}
+
+/* Scrollbar para filters en móvil */
+@media (max-width: 768px) {
+  .missions-filters::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .missions-filters::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  .missions-filters::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+  }
 }

@@ -148,6 +148,7 @@ export default function MapView() {
       <div className="map-container">
         {/* Sidebar con leyenda y estadísticas */}
         <div className="map-sidebar">
+          {/*
           <Card>
             <h3 className="card-title">
               <Icon icon="fluent-color:calendar-data-bar-16" /> Estadísticas
@@ -168,14 +169,14 @@ export default function MapView() {
               })}
             </div>
           </Card>
-
+          */}
           <Card>
             <MapLegend ticketsByStatus={ticketsByStatus} />
           </Card>
 
           <Card>
             <h4>💡 Cómo usar el mapa</h4>
-            <ul className="map-instructions">
+            <ul className="mapview-instructions">
               <li>📍 Cada marcador representa un ticket</li>
               <li>🎨 Los colores indican el estado</li>
               <li>🔍 Usa los filtros para buscar</li>

@@ -1,10 +1,11 @@
 /**
- * API Client - Cliente HTTP para comunicación con el servidor
- * 
- * Proporciona métodos convenientes para todas las operaciones de datos.
+ * API Client - Cliente HTTP con autenticación Supabase
+ * client/src/services/apiClient.js
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import supabase from "../config/supabase";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 class ApiClient {
   constructor(baseURL = API_URL) {
@@ -12,17 +13,37 @@ class ApiClient {
   }
 
   /**
+   * Obtiene el token de autenticación actual
+   */
+  async getAuthToken() {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error("Error getting auth token:", error);
+      return null;
+    }
+  }
+
+  /**
    * Método genérico para hacer requests
    */
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
+    // Obtener token de autenticación
+    const token = await this.getAuthToken();
+
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
+        "Content-Type": "application/json",
+        // Agregar Authorization header si hay token
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
       },
-      ...options
+      ...options,
     };
 
     try {
@@ -30,12 +51,25 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Request failed');
+        // Manejar errores de autenticación
+        if (response.status === 401) {
+          // Token inválido o expirado - redirigir a login
+          console.error("Authentication failed - redirecting to login");
+          window.location.href = "/login";
+          throw new Error(
+            "Sesión expirada. Por favor inicia sesión nuevamente."
+          );
+        }
+
+        throw new Error(data.error?.message || data.error || "Request failed");
       }
 
       return data;
     } catch (error) {
-      console.error(`API Error [${options.method || 'GET'} ${endpoint}]:`, error);
+      console.error(
+        `API Error [${options.method || "GET"} ${endpoint}]:`,
+        error
+      );
       throw error;
     }
   }
@@ -46,16 +80,16 @@ class ApiClient {
    * Obtiene todos los datos
    */
   async getAllData() {
-    return this.request('/data');
+    return this.request("/data");
   }
 
   /**
    * Guarda todos los datos
    */
   async saveAllData(data) {
-    return this.request('/data', {
-      method: 'POST',
-      body: JSON.stringify(data)
+    return this.request("/data", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
@@ -63,8 +97,8 @@ class ApiClient {
    * Reinicia datos al estado inicial
    */
   async resetData() {
-    return this.request('/data/reset', {
-      method: 'POST'
+    return this.request("/data/reset", {
+      method: "POST",
     });
   }
 
@@ -72,8 +106,8 @@ class ApiClient {
    * Crea un backup
    */
   async createBackup() {
-    return this.request('/data/backup', {
-      method: 'POST'
+    return this.request("/data/backup", {
+      method: "POST",
     });
   }
 
@@ -81,7 +115,7 @@ class ApiClient {
    * Obtiene metadatos
    */
   async getMetadata() {
-    return this.request('/data/metadata');
+    return this.request("/data/metadata");
   }
 
   /**
@@ -96,8 +130,8 @@ class ApiClient {
    */
   async updateCollection(collectionName, items) {
     return this.request(`/data/${collectionName}`, {
-      method: 'PUT',
-      body: JSON.stringify(items)
+      method: "PUT",
+      body: JSON.stringify(items),
     });
   }
 
@@ -107,7 +141,7 @@ class ApiClient {
    * Verifica estado del servidor
    */
   async healthCheck() {
-    return this.request('/health');
+    return this.request("/health");
   }
 }
 

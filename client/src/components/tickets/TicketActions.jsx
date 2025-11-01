@@ -195,7 +195,7 @@ export default function TicketActions({
         </p>
       )}
 
-      {!canAccept && ticket.status !== 'reported' && ticket.status !== 'rejected' && (
+      {!canAccept && ticket.status !== 'reported' && ticket.status !== 'rejected' && ticket.accepted_by !== currentUser.id &&(
         <p style={{ 
           fontSize: '0.875rem', 
           color: 'var(--text-muted)',
@@ -206,7 +206,7 @@ export default function TicketActions({
         </p>
       )}
 
-      {!canValidate && ticket.status === 'accepted' && (
+      {!canValidate && ticket.status === 'accepted' && ticket.reportedBy == currentUser.id &&(
         <p style={{ 
           fontSize: '0.875rem', 
           color: 'var(--text-muted)',
