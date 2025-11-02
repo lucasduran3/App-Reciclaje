@@ -3,7 +3,7 @@
  */
 
 import supabaseService from "../services/supabaseService.js";
-import supabase from '../config/supabase.js';
+import supabase from "../config/supabase.js";
 import {
   validateTicket,
   validateTicketStatusTransition,
@@ -311,47 +311,168 @@ class TicketController {
   async complete(req, res, next) {
     try {
       const { id } = req.params;
-      const { photos_after, cleaning_status, validation_type, qr_code } =
-        req.body;
+      const { photo_after, cleaning_status } = req.body;
 
+      // Obtener userId del token (viene del middleware de auth)
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Usuario no autenticado",
+        });
+      }
+
+      // Validaciones básicas
+      if (!photo_after) {
+        return res.status(400).json({
+          success: false,
+          error: 'Foto "después" es requerida',
+        });
+      }
+
+      if (
+        !cleaning_status ||
+        !["partial", "complete"].includes(cleaning_status)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Estado de limpieza inválido (partial o complete)",
+        });
+      }
+
+      // Obtener ticket
       const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
-          error: "Ticket not found",
+          error: "Ticket no encontrado",
         });
       }
 
+      // Regla de negocio 1: Solo el cleaner puede completar
+      if (ticket.accepted_by !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: "Solo el usuario que aceptó el ticket puede completarlo",
+        });
+      }
+
+      // Regla de negocio 2: El reporter no puede completar su propio ticket
+      if (ticket.reported_by === userId) {
+        return res.status(403).json({
+          success: false,
+          error: "No puedes completar tu propio ticket",
+        });
+      }
+
+      // Regla de negocio 3: El ticket debe estar en estado permitido
       if (ticket.status !== "accepted" && ticket.status !== "in_progress") {
         return res.status(400).json({
           success: false,
-          error: "Ticket cannot be completed in current status",
+          error: `Ticket no puede ser completado en estado "${ticket.status}"`,
         });
       }
 
-      if (!photos_after || photos_after.length === 0) {
-        return res.status(400).json({
+      // Subir foto a Supabase Storage
+      let photoUrl;
+      try {
+        if (photo_after.startsWith("data:")) {
+          // Es base64, subirla
+          photoUrl = await this.uploadPhotoToStorage(photo_after, userId);
+        } else if (photo_after.startsWith("http")) {
+          // Ya es una URL
+          photoUrl = photo_after;
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: "Formato de foto inválido",
+          });
+        }
+      } catch (uploadError) {
+        console.error("Error uploading photo:", uploadError);
+        return res.status(500).json({
           success: false,
-          error: "At least one after photo is required",
+          error: `Error al subir foto: ${uploadError.message}`,
         });
       }
 
       // Actualizar ticket
       const updatedTicket = await supabaseService.update("tickets", id, {
         status: "validating",
-        photos_after: photos_after,
-        cleaning_status: cleaning_status || "complete",
-        validation_type: validation_type || "photo",
+        photos_after: [photoUrl],
+        cleaning_status: cleaning_status,
+        validation_type: "photo",
         validation_status: "pending",
-        qr_code: qr_code || null,
       });
+
+      // Obtener cleaner para actualizar stats y puntos
+      const cleaner = await supabaseService.getById("profiles", userId);
+      if (cleaner) {
+        // Calcular puntos según cleaning_status y prioridad
+        const basePoints = cleaning_status === "complete" ? 100 : 50;
+        const priorityMultiplier = {
+          low: 1.0,
+          medium: 1.2,
+          high: 1.5,
+          urgent: 2.0,
+        };
+        const sizeMultiplier = {
+          small: 1.0,
+          medium: 1.3,
+          large: 1.6,
+          xlarge: 2.0,
+        };
+
+        const points = Math.round(
+          basePoints *
+            (priorityMultiplier[ticket.priority] || 1.0) *
+            (sizeMultiplier[ticket.estimated_size] || 1.0)
+        );
+
+        // Actualizar stats
+        const stats = cleaner.stats || {};
+        stats.tickets_cleaned = (stats.tickets_cleaned || 0) + 1;
+
+        await supabaseService.update("profiles", userId, {
+          stats,
+          points: cleaner.points + points,
+        });
+
+        // Log de puntos otorgados
+        console.log(
+          `Cleaner ${userId} awarded ${points} points for completing ticket ${id}`
+        );
+      }
 
       res.json({
         success: true,
-        message: "Ticket marked as completed, waiting for validation",
-        data: updatedTicket,
+        message: "Ticket completado exitosamente. En espera de validación",
+        data: {
+          ticket: updatedTicket,
+          pointsAwarded: cleaner
+            ? Math.round(
+                (cleaning_status === "complete" ? 100 : 50) *
+                  (ticket.priority === "urgent"
+                    ? 2.0
+                    : ticket.priority === "high"
+                    ? 1.5
+                    : ticket.priority === "medium"
+                    ? 1.2
+                    : 1.0) *
+                  (ticket.estimated_size === "xlarge"
+                    ? 2.0
+                    : ticket.estimated_size === "large"
+                    ? 1.6
+                    : ticket.estimated_size === "medium"
+                    ? 1.3
+                    : 1.0)
+              )
+            : 0,
+        },
       });
     } catch (error) {
+      console.error("Error completing ticket:", error);
       next(error);
     }
   }
@@ -850,37 +971,31 @@ class TicketController {
    */
   async uploadPhotoToStorage(base64Data, userId) {
     try {
-      // Extraer el tipo de imagen y los datos
       const matches = base64Data.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
 
       if (!matches || matches.length !== 3) {
         throw new Error("Formato de imagen base64 inválido");
       }
 
-      const imageType = matches[1]; // jpeg, png, webp
+      const imageType = matches[1];
       const base64Content = matches[2];
 
-      // Validar tipo de imagen
       const validTypes = ["jpeg", "jpg", "png", "webp"];
       if (!validTypes.includes(imageType.toLowerCase())) {
         throw new Error("Tipo de imagen no permitido. Usa JPG, PNG o WebP");
       }
 
-      // Convertir base64 a Buffer
       const imageBuffer = Buffer.from(base64Content, "base64");
 
-      // Validar tamaño (máximo 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       if (imageBuffer.length > maxSize) {
         throw new Error("La imagen excede el tamaño máximo de 5MB");
       }
 
-      // Generar nombre único para la imagen
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 9);
       const fileName = `${userId}/${timestamp}-${randomStr}.${imageType}`;
 
-      // Subir a Supabase Storage (bucket: ticket-photos)
       const { data, error } = await supabase.storage
         .from("ticket-photos")
         .upload(fileName, imageBuffer, {
@@ -890,11 +1005,9 @@ class TicketController {
         });
 
       if (error) {
-        console.error("Error uploading to storage:", error);
         throw new Error(`Error al subir imagen: ${error.message}`);
       }
 
-      // Obtener URL pública
       const { data: urlData } = supabase.storage
         .from("ticket-photos")
         .getPublicUrl(fileName);

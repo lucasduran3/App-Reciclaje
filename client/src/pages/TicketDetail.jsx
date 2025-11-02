@@ -11,10 +11,13 @@ import { useUsers } from "../hooks/useUsers";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Badge from "../components/common/Badge";
+import { useAuth } from "../context/AuthContext";
 import ConfirmModal from "../components/common/ConfirmModal";
 import Avatar from "../components/common/Avatar";
 import TicketActions from "../components/tickets/TicketActions";
 import apiClient from "../services/apiClient";
+import CompleteTicketModal from "../components/tickets/CompleteTicketModal";
+import ticketService from "../services/ticketService";
 
 const STATUS_CONFIG = {
   reported: {
@@ -69,9 +72,12 @@ export default function TicketDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { users } = useUsers();
+  const { currentUser } = useAuth();
   const [comments, setComments] = useState([]);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const {
     ticket,
@@ -84,6 +90,13 @@ export default function TicketDetail() {
     canAccept,
     canValidate,
   } = useTicket(id);
+
+  const canComplete =
+    ticket && currentUser
+      ? ticket.status === "accepted" &&
+        ticket.accepted_by === currentUser.id &&
+        ticket.reported_by !== currentUser.id
+      : false;
 
   // Cargar comentarios
   useEffect(() => {
@@ -115,6 +128,39 @@ export default function TicketDetail() {
 
   const handleValidate = () => {
     navigate(`/tickets/${id}/validate`);
+  };
+
+  const handleComplete = () => {
+    setShowCompleteModal(true);
+  };
+
+  const handleCompleteSubmit = async (photoFile, cleaningStatus) => {
+    setCompleting(true);
+
+    try {
+      // Convertir foto a base64
+      const photoBase64 = await ticketService.fileToBase64(photoFile);
+
+      // Completar ticket
+      const response = await ticketService.complete(ticket.id, {
+        photo_after: photoBase64,
+        cleaning_status: cleaningStatus,
+      });
+
+      // Cerrar modal
+      setShowCompleteModal(false);
+
+      // Recargar ticket
+      await loadTicket();
+
+      // Mostrar mensaje de éxito (podrías usar un toast aquí)
+      alert(`¡Ticket completado! +${response.data.pointsAwarded} puntos 🎉`);
+    } catch (err) {
+      console.error("Error completing ticket:", err);
+      throw err; // El modal manejará el error
+    } finally {
+      setCompleting(false);
+    }
   };
 
   const handleCommentAdded = async (text) => {
@@ -378,10 +424,12 @@ export default function TicketDetail() {
             isLikedByUser={isLikedByUser}
             canAccept={canAccept}
             canValidate={canValidate}
+            canComplete={canComplete} // NUEVA PROP
             onLike={toggleLike}
             onComment={handleCommentAdded}
             onAccept={handleAccept}
             onValidate={handleValidate}
+            onComplete={handleComplete} // NUEVA PROP
           />
 
           {/* Información adicional */}
@@ -461,6 +509,15 @@ export default function TicketDetail() {
           confirmText="Sí, aceptar ticket"
           onConfirm={confirmAccept}
         ></ConfirmModal>
+      )}
+
+      {showCompleteModal && (
+        <CompleteTicketModal
+          isOpen={showCompleteModal}
+          onClose={() => setShowCompleteModal(false)}
+          onComplete={handleCompleteSubmit}
+          ticketId={ticket.id}
+        />
       )}
     </div>
   );

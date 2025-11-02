@@ -140,12 +140,55 @@ class TicketService {
    * Marca un ticket como completado
    */
   async complete(id, data) {
-    return apiClient.request(`/tickets/${id}/complete`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  }
+    try {
+      // Obtener sesión de Supabase para el token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
+      if (!session) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Validar datos
+      if (!data.photo_after) {
+        throw new Error('Foto "después" es requerida');
+      }
+
+      if (
+        !data.cleaning_status ||
+        !["partial", "complete"].includes(data.cleaning_status)
+      ) {
+        throw new Error('Estado de limpieza debe ser "partial" o "complete"');
+      }
+
+      // Enviar al backend
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+        }/tickets/${id}/complete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Error al completar ticket");
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error completing ticket:", error);
+      throw error;
+    }
+  }
   /**
    * Valida un ticket completado
    */
