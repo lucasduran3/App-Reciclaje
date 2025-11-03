@@ -11,10 +11,12 @@ import { useUsers } from "../hooks/useUsers";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Badge from "../components/common/Badge";
+import { useAuth } from "../context/AuthContext";
 import ConfirmModal from "../components/common/ConfirmModal";
 import Avatar from "../components/common/Avatar";
 import TicketActions from "../components/tickets/TicketActions";
 import apiClient from "../services/apiClient";
+import CompleteTicketModal from "../components/tickets/CompleteTicketModal";
 
 const STATUS_CONFIG = {
   reported: {
@@ -72,6 +74,8 @@ export default function TicketDetail() {
   const [comments, setComments] = useState([]);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const {
     ticket,
@@ -80,9 +84,11 @@ export default function TicketDetail() {
     toggleLike,
     addComment,
     acceptTicket,
+    completeTicket,
     isLikedByUser,
     canAccept,
     canValidate,
+    canComplete,
   } = useTicket(id);
 
   // Cargar comentarios
@@ -115,6 +121,26 @@ export default function TicketDetail() {
 
   const handleValidate = () => {
     navigate(`/tickets/${id}/validate`);
+  };
+
+  const handleComplete = () => {
+    setShowCompleteModal(true);
+  };
+
+  const handleCompleteSubmit = async (photoFile, cleaningStatus) => {
+    try {
+      const result = await completeTicket(photoFile, cleaningStatus);
+
+      setShowCompleteModal(false);
+
+      const response = await apiClient.request(`/comments/ticket/${id}`);
+      setComments(response.data || []);
+
+      //alert(`¡Ticket completado! +${result.pointsAwarded} puntos 🎉`);
+    } catch (err) {
+      console.error("Error completing ticket:", err);
+      throw err;
+    }
   };
 
   const handleCommentAdded = async (text) => {
@@ -223,35 +249,89 @@ export default function TicketDetail() {
           </Card>
 
           {/* Fotos */}
-          {ticket.photos_before && ticket.photos_before.length > 0 && (
+          {((ticket.photos_before && ticket.photos_before.length > 0) ||
+            (ticket.photos_after && ticket.photos_after.length > 0)) && (
             <Card className="ticketD-photo-container">
               <h3 className="card-title">Fotos del Reporte</h3>
               <div>
-                <img
-                  className="current-photo"
-                  src={ticket.photos_before[currentImageIndex]}
-                  alt={`Foto ${currentImageIndex + 1}`}
-                />
-                {ticket.photos_before.length > 1 && (
-                  <div className="carousell">
-                    {ticket.photos_before.map((photo, index) => (
+                {(() => {
+                  // Combinar ambos arrays de fotos
+                  const allPhotos = [
+                    ...(ticket.photos_before || []),
+                    ...(ticket.photos_after || []),
+                  ];
+
+                  const photosBefore = ticket.photos_before?.length || 0;
+                  const photosAfter = ticket.photos_after?.length || 0;
+
+                  return (
+                    <>
                       <img
-                        className="carousell-miniature"
-                        key={index}
-                        src={photo}
-                        alt={`Miniatura ${index + 1}`}
-                        onClick={() => setCurrentImageIndex(index)}
-                        style={{
-                          border:
-                            index === currentImageIndex
-                              ? "3px solid var(--primary)"
-                              : "3px solid transparent",
-                          opacity: index === currentImageIndex ? 1 : 0.7,
-                        }}
+                        className="current-photo"
+                        src={allPhotos[currentImageIndex]}
+                        alt={`Foto ${currentImageIndex + 1}`}
                       />
-                    ))}
-                  </div>
-                )}
+
+                      {allPhotos.length > 1 && (
+                        <div className="carousell">
+                          {allPhotos.map((photo, index) => {
+                            const isBeforePhoto = index < photosBefore;
+                            return (
+                              <div
+                                className="thumbnail"
+                                key={`${index}-${photo}`}
+                              >
+                                <img
+                                  className={`carousell-miniature ${
+                                    index === currentImageIndex ? "active" : ""
+                                  }`}
+                                  src={photo}
+                                  alt={`Miniatura ${index + 1}`}
+                                  onClick={() => setCurrentImageIndex(index)}
+                                  style={{
+                                    border:
+                                      index === currentImageIndex
+                                        ? "3px solid var(--primary)"
+                                        : "3px solid transparent",
+                                    opacity:
+                                      index === currentImageIndex ? 1 : 0.7,
+                                  }}
+                                />
+                                <span
+                                  className="photo-badge-indicator"
+                                  style={{
+                                    background: isBeforePhoto
+                                      ? "var(--warning)"
+                                      : "var(--success)",
+                                  }}
+                                  aria-hidden="true"
+                                >
+                                  {isBeforePhoto ? "Antes" : "Después"}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Indicador de foto actual */}
+                      {allPhotos.length > 1 && (
+                        <div className="actual-photo-indicator">
+                          {currentImageIndex < photosBefore ? (
+                            <Badge variant="warning" size="small">
+                              Antes ({currentImageIndex + 1}/{photosBefore})
+                            </Badge>
+                          ) : (
+                            <Badge variant="success" size="small">
+                              Después ({currentImageIndex - photosBefore + 1}/
+                              {photosAfter})
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </Card>
           )}
@@ -378,10 +458,12 @@ export default function TicketDetail() {
             isLikedByUser={isLikedByUser}
             canAccept={canAccept}
             canValidate={canValidate}
+            canComplete={canComplete} // NUEVA PROP
             onLike={toggleLike}
             onComment={handleCommentAdded}
             onAccept={handleAccept}
             onValidate={handleValidate}
+            onComplete={handleComplete} // NUEVA PROP
           />
 
           {/* Información adicional */}
@@ -461,6 +543,15 @@ export default function TicketDetail() {
           confirmText="Sí, aceptar ticket"
           onConfirm={confirmAccept}
         ></ConfirmModal>
+      )}
+
+      {showCompleteModal && (
+        <CompleteTicketModal
+          isOpen={showCompleteModal}
+          onClose={() => setShowCompleteModal(false)}
+          onComplete={handleCompleteSubmit}
+          ticketId={ticket.id}
+        />
       )}
     </div>
   );

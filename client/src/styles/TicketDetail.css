@@ -85,13 +85,24 @@
 .ticketD-photo-container .carousell {
   display: flex;
   gap: var(--spacing-sm);
-  overflow-x: auto;
   padding-bottom: var(--spacing-sm);
+  overflow: visible;
+}
+
+.ticketD-photo-container .carousell .thumbnail {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex: 0 0 80px;
+  display: inline-block;
+  overflow: visible;
 }
 
 .ticketD-photo-container .carousell-miniature {
-  width: 80px;
-  height: 80px;
+  display: block;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: var(--radius);
   cursor: pointer;
@@ -99,9 +110,29 @@
   transition: var(--transition);
 }
 
+/* badge posicionado encima de la miniatura */
+.ticketD-photo-container .carousell .photo-badge-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .ticketD-photo-container .carousell-miniature:hover {
   opacity: 0.8;
   transform: scale(1.05);
+}
+
+.ticketD-photo-container .actual-photo-indicator {
+  text-align: center;
+  margin-top: var(--spacing-sm);
 }
 
 .ticketD-participants-grid {
