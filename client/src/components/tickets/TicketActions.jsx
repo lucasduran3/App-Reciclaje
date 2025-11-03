@@ -3,41 +3,43 @@
  * Crear: client/src/components/tickets/TicketActions.jsx
  */
 
-import React, { useState } from 'react';
-import { Icon } from '@iconify/react';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from "react";
+import { Icon } from "@iconify/react";
+import Card from "../common/Card";
+import Button from "../common/Button";
+import { useAuth } from "../../context/AuthContext";
 
-export default function TicketActions({ 
-  ticket, 
+export default function TicketActions({
+  ticket,
   isLikedByUser,
   canAccept,
   canValidate,
-  onLike, 
-  onComment, 
-  onAccept, 
-  onValidate 
+  canComplete,
+  onLike,
+  onComment,
+  onAccept,
+  onValidate,
+  onComplete,
 }) {
   const { currentUser } = useAuth();
   const [showCommentForm, setShowCommentForm] = useState(false);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!commentText.trim() || isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       await onComment(commentText);
-      setCommentText('');
+      setCommentText("");
       setShowCommentForm(false);
     } catch (error) {
       console.log("Error aqui");
-      console.error('Error submitting comment:', error);
-      alert('Error al enviar comentario', error.message);
+      console.error("Error submitting comment:", error);
+      alert("Error al enviar comentario", error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -46,7 +48,7 @@ export default function TicketActions({
   if (!currentUser) {
     return (
       <Card>
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <p style={{ textAlign: "center", color: "var(--text-secondary)" }}>
           Inicia sesión para interactuar con este ticket
         </p>
       </Card>
@@ -60,25 +62,34 @@ export default function TicketActions({
       </div>
 
       {/* Botones de Like y Comentar */}
-      <div style={{ 
-        display: 'flex', 
-        gap: 'var(--spacing-md)',
-        marginBottom: 'var(--spacing-lg)'
-      }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "var(--spacing-md)",
+          marginBottom: "var(--spacing-lg)",
+        }}
+      >
         <Button
-          variant={isLikedByUser ? 'primary' : 'ghost'}
+          variant={isLikedByUser ? "primary" : "ghost"}
           onClick={onLike}
           style={{ flex: 1 }}
           icon={
-            <Icon 
-              icon={isLikedByUser ? "fluent-color:heart-32" : "fluent-color:heart-pulse-32"} 
+            <Icon
+              icon={
+                isLikedByUser
+                  ? "fluent-color:heart-32"
+                  : "fluent-color:heart-pulse-32"
+              }
               width="20"
             />
           }
         >
-          {isLikedByUser ? 'Te gusta' : 'Me gusta'}
+          {isLikedByUser ? "Te gusta" : "Me gusta"}
           {ticket.interactions.likes > 0 && (
-            <span className="badge badge-small badge-default" style={{ marginLeft: '0.5rem' }}>
+            <span
+              className="badge badge-small badge-default"
+              style={{ marginLeft: "0.5rem" }}
+            >
               {ticket.interactions.likes}
             </span>
           )}
@@ -92,7 +103,10 @@ export default function TicketActions({
         >
           Comentar
           {ticket.interactions.comments > 0 && (
-            <span className="badge badge-small badge-default" style={{ marginLeft: '0.5rem' }}>
+            <span
+              className="badge badge-small badge-default"
+              style={{ marginLeft: "0.5rem" }}
+            >
               {ticket.interactions.comments}
             </span>
           )}
@@ -101,7 +115,10 @@ export default function TicketActions({
 
       {/* Formulario de comentario */}
       {showCommentForm && (
-        <form onSubmit={handleCommentSubmit} style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <form
+          onSubmit={handleCommentSubmit}
+          style={{ marginBottom: "var(--spacing-lg)" }}
+        >
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -109,34 +126,36 @@ export default function TicketActions({
             rows={3}
             maxLength={500}
             style={{
-              width: '100%',
-              padding: 'var(--spacing-md)',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)',
-              fontFamily: 'inherit',
-              fontSize: '0.875rem',
-              marginBottom: 'var(--spacing-sm)',
-              resize: 'vertical'
+              width: "100%",
+              padding: "var(--spacing-md)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              fontFamily: "inherit",
+              fontSize: "0.875rem",
+              marginBottom: "var(--spacing-sm)",
+              resize: "vertical",
             }}
             disabled={isSubmitting}
           />
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 'var(--spacing-sm)'
-          }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "var(--spacing-sm)",
+            }}
+          >
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
               {commentText.length}/500
             </span>
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <div style={{ display: "flex", gap: "var(--spacing-sm)" }}>
               <Button
                 type="button"
                 variant="ghost"
                 size="small"
                 onClick={() => {
                   setShowCommentForm(false);
-                  setCommentText('');
+                  setCommentText("");
                 }}
                 disabled={isSubmitting}
               >
@@ -157,11 +176,13 @@ export default function TicketActions({
       )}
 
       {/* Botones de Aceptar y Validar */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        gap: 'var(--spacing-sm)'
-      }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--spacing-sm)",
+        }}
+      >
         <Button
           variant="secondary"
           fullWidth
@@ -170,6 +191,16 @@ export default function TicketActions({
           icon={<Icon icon="fluent-color:checkmark-circle-48" width="20" />}
         >
           Aceptar Ticket
+        </Button>
+
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={onComplete}
+          disabled={!canComplete}
+          icon={<Icon icon="fluent-color:checkmark-starburst-24" width="20" />}
+        >
+          Completar Limpieza
         </Button>
 
         <Button
@@ -184,38 +215,66 @@ export default function TicketActions({
       </div>
 
       {/* Mensajes informativos */}
-      {!canAccept && ticket.status === 'reported' && ticket.reportedBy === currentUser.id && (
-        <p style={{ 
-          fontSize: '0.875rem', 
-          color: 'var(--text-muted)',
-          marginTop: 'var(--spacing-md)',
-          textAlign: 'center'
-        }}>
-          No puedes aceptar tu propio ticket
-        </p>
-      )}
+      {!canAccept &&
+        ticket.status === "reported" &&
+        ticket.reportedBy === currentUser.id && (
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--text-muted)",
+              marginTop: "var(--spacing-md)",
+              textAlign: "center",
+            }}
+          >
+            No puedes aceptar tu propio ticket
+          </p>
+        )}
 
-      {!canAccept && ticket.status !== 'reported' && ticket.status !== 'rejected' && ticket.accepted_by !== currentUser.id &&(
-        <p style={{ 
-          fontSize: '0.875rem', 
-          color: 'var(--text-muted)',
-          marginTop: 'var(--spacing-md)',
-          textAlign: 'center'
-        }}>
-          Este ticket ya fue aceptado por otro usuario
-        </p>
-      )}
+      {!canAccept &&
+        ticket.status !== "reported" &&
+        ticket.status !== "rejected" &&
+        ticket.accepted_by !== currentUser.id && (
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--text-muted)",
+              marginTop: "var(--spacing-md)",
+              textAlign: "center",
+            }}
+          >
+            Este ticket ya fue aceptado por otro usuario
+          </p>
+        )}
 
-      {!canValidate && ticket.status === 'accepted' && ticket.reportedBy == currentUser.id &&(
-        <p style={{ 
-          fontSize: '0.875rem', 
-          color: 'var(--text-muted)',
-          marginTop: 'var(--spacing-md)',
-          textAlign: 'center'
-        }}>
-          Podrás validar cuando el limpiador complete el trabajo
-        </p>
-      )}
+      {!canComplete &&
+        ticket.status === "accepted" &&
+        ticket.accepted_by === currentUser.id && (
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--text-muted)",
+              marginTop: "var(--spacing-md)",
+              textAlign: "center",
+            }}
+          >
+            Sube una foto de la limpieza completada para finalizar
+          </p>
+        )}
+
+      {!canValidate &&
+        ticket.status === "accepted" &&
+        ticket.reportedBy == currentUser.id && (
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--text-muted)",
+              marginTop: "var(--spacing-md)",
+              textAlign: "center",
+            }}
+          >
+            Podrás validar cuando el limpiador complete el trabajo
+          </p>
+        )}
     </Card>
   );
 }
