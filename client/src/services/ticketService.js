@@ -5,10 +5,14 @@
 import supabase from "../config/supabase";
 import apiClient from "./apiClient";
 
+// Variable global para controlar request en progreso
+let createTicketAbortController = null;
+
 class TicketService {
   /**
    * Obtiene todos los tickets con filtros opcionales
    */
+
   async getAll(filters = {}) {
     try {
       let query = supabase
@@ -281,7 +285,16 @@ class TicketService {
    */
   async createWithPhoto(ticketData, photo) {
     try {
-      // Obtener token de sesión actual
+      // 1. Cancelar request anterior si existe
+      if (createTicketAbortController) {
+        console.warn("⚠️ Canceling previous ticket creation request");
+        createTicketAbortController.abort();
+      }
+
+      // 2. Crear nuevo AbortController
+      createTicketAbortController = new AbortController();
+
+      // 3. Obtener token de sesión actual
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -290,21 +303,46 @@ class TicketService {
         throw new Error("Usuario no autenticado");
       }
 
+      // 4. Validar datos básicos
+      if (!ticketData.title || ticketData.title.length < 10) {
+        throw new Error("El título debe tener al menos 10 caracteres");
+      }
+
+      if (
+        !ticketData.location ||
+        !ticketData.location.lat ||
+        !ticketData.location.lng
+      ) {
+        throw new Error("Ubicación es requerida");
+      }
+
+      if (!photo) {
+        throw new Error("Foto es requerida");
+      }
+
+      // 5. Convertir foto a base64 si es File
       let photoBase64 = photo;
 
-      // Si photo es un File, convertirlo a base64
       if (photo instanceof File) {
+        console.log("📸 Converting photo to base64...");
         photoBase64 = await this.fileToBase64(photo);
       }
 
-      // Preparar datos del ticket
+      // 6. Validar que es base64 válido
+      if (!photoBase64.startsWith("data:image/")) {
+        throw new Error("Formato de foto inválido");
+      }
+
+      // 7. Preparar datos del ticket
       const ticketPayload = {
         ...ticketData,
         photo_before: photoBase64,
         reported_by: session.user.id,
       };
 
-      // Enviar al backend con token de autenticación
+      console.log("Sending ticket creation request...");
+
+      // 8. Enviar al backend con AbortController
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:3000/api"
@@ -316,6 +354,7 @@ class TicketService {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify(ticketPayload),
+          signal: createTicketAbortController.signal, // ⚠️ Para abortar
         }
       );
 
@@ -327,9 +366,24 @@ class TicketService {
         );
       }
 
+      console.log("Ticket created successfully:", data.data.id);
+
+      // 9. Limpiar AbortController
+      createTicketAbortController = null;
+
       return data;
     } catch (error) {
+      // Ignorar errores de abort (cancelaciones intencionales)
+      if (error.name === "AbortError") {
+        console.log("Request aborted (duplicate prevention)");
+        throw new Error("Request cancelado (duplicado prevenido)");
+      }
+
       console.error("Error creating ticket with photo:", error);
+
+      // Limpiar AbortController en error
+      createTicketAbortController = null;
+
       throw error;
     }
   }

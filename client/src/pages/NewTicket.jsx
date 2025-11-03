@@ -211,6 +211,7 @@ export default function NewTicket() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validación
     if (!validateForm()) {
       setSubmitError("Por favor completa todos los campos requeridos");
       return;
@@ -218,6 +219,12 @@ export default function NewTicket() {
 
     if (!currentUser) {
       setSubmitError("Debes iniciar sesión para crear un ticket");
+      return;
+    }
+
+    //IMPORTANTE: Prevenir múltiples submissions
+    if (loading) {
+      console.warn("Submission already in progress");
       return;
     }
 
@@ -236,14 +243,20 @@ export default function NewTicket() {
         location: formData.location,
       };
 
+      console.log("Creating ticket with photo...");
+
+      // Llamar al servicio con la foto
       const response = await ticketService.createWithPhoto(
         ticketData,
         formData.photo
       );
 
+      console.log("Ticket created:", response.data.id);
+
       // Navegar al ticket creado
       navigate(`/tickets/${response.data.id}`, {
         state: { message: "¡Ticket creado exitosamente! +50 puntos 🎉" },
+        replace: true, // Reemplazar historia para evitar re-submit
       });
     } catch (error) {
       console.error("Error creating ticket:", error);
@@ -554,9 +567,13 @@ export default function NewTicket() {
               variant="primary"
               fullWidth
               size="large"
-              disabled={!isFormValid() || loading}
-              loading={loading}
+              disabled={!isFormValid() || loading} // Deshabilitar si loading
+              loading={loading} // Mostrar spinner
               icon={<Icon icon="fluent-color:send-24" />}
+              style={{
+                pointerEvents: loading ? "none" : "auto", // Bloquear clicks
+                opacity: loading ? 0.7 : 1,
+              }}
             >
               {loading ? "Creando ticket..." : "Crear Ticket"}
             </Button>
