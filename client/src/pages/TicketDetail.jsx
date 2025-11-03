@@ -17,6 +17,7 @@ import Avatar from "../components/common/Avatar";
 import TicketActions from "../components/tickets/TicketActions";
 import apiClient from "../services/apiClient";
 import CompleteTicketModal from "../components/tickets/CompleteTicketModal";
+import ValidateTicketModal from "../components/tickets/ValidateTicketModal";
 
 const STATUS_CONFIG = {
   reported: {
@@ -75,7 +76,7 @@ export default function TicketDetail() {
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [completing, setCompleting] = useState(false);
+  const [showValidateModal, setShowValidateModal] = useState(false);
 
   const {
     ticket,
@@ -85,6 +86,7 @@ export default function TicketDetail() {
     addComment,
     acceptTicket,
     completeTicket,
+    validateTicket,
     isLikedByUser,
     canAccept,
     canValidate,
@@ -120,7 +122,33 @@ export default function TicketDetail() {
   };
 
   const handleValidate = () => {
-    navigate(`/tickets/${id}/validate`);
+    setShowValidateModal(true);
+  };
+
+  const handleValidateSubmit = async (approved, validationMessage) => {
+    try {
+      const result = await validateTicket(approved, validationMessage);
+
+      setShowValidateModal(false);
+
+      const response = await apiClient.request(`/comments/ticket/${id}`);
+      setComments(response.data || []);
+
+      //mostrar mensaje de exito
+      if (approved) {
+        const points = result.pointsAwarded?.cleaner || 0;
+        console.log(
+          `¡Ticket validado exitosamente! 🎉\n\nEl limpiador recibió ${points} puntos.`
+        );
+      } else {
+        console.log(
+          "Validación rechazada.\n\nEl ticket vuelve a estar disponible para que otro usuario lo acepte."
+        );
+      }
+    } catch (err) {
+      console.error("Error al validar ticket:", err);
+      throw err; //relanzar para que el modal lo maneje
+    }
   };
 
   const handleComplete = () => {
@@ -550,6 +578,15 @@ export default function TicketDetail() {
           isOpen={showCompleteModal}
           onClose={() => setShowCompleteModal(false)}
           onComplete={handleCompleteSubmit}
+          ticketId={ticket.id}
+        />
+      )}
+
+      {showValidateModal && (
+        <ValidateTicketModal
+          isOpen={showValidateModal}
+          onClose={() => setShowValidateModal(false)}
+          onValidate={handleValidateSubmit}
           ticketId={ticket.id}
         />
       )}
