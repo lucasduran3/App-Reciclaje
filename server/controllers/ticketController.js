@@ -485,7 +485,31 @@ class TicketController {
   async validate(req, res, next) {
     try {
       const { id } = req.params;
-      const { userId, approved, rejectionReason } = req.body;
+      const { approved, validation_message } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Usuario no encontrado",
+        });
+      }
+
+      //validaciones básicas
+      if (typeof approved !== "boolean") {
+        return res.status(400).json({
+          success: false,
+          error: "El campo 'approved' es requerido y debe ser booleano",
+        });
+      }
+
+      //validar mensaje de validacion
+      if (validation_message && validation_message.length > 200) {
+        return res.status(400).json({
+          succes: false,
+          error: "El mensaje de validacion no puede exceder los 200 caracteres",
+        });
+      }
 
       const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
@@ -495,29 +519,17 @@ class TicketController {
         });
       }
 
+      if (ticket.reported_by !== userId) {
+        return res.status(403).json({
+          succes: false,
+          error: "Solo el reportante puede validar este ticket",
+        });
+      }
+
       if (ticket.status !== "validating") {
         return res.status(400).json({
           success: false,
           error: "Ticket is not waiting for validation",
-        });
-      }
-
-      // Si es validación por reportante, verificar que sea el mismo
-      if (
-        ticket.validation_type === "reporter" &&
-        ticket.reported_by !== userId
-      ) {
-        return res.status(403).json({
-          success: false,
-          error: "Only the reporter can validate this ticket",
-        });
-      }
-
-      const user = await supabaseService.getById("profiles", userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: "User not found",
         });
       }
 
@@ -530,54 +542,43 @@ class TicketController {
           validated_by: userId,
           validation_status: "approved",
           validated_at: new Date().toISOString(),
+          validation_message: validation_message || null,
           points_awarded: points,
           completed_at: new Date().toISOString(),
         });
 
         // Actualizar stats y dar puntos a todos los participantes
-        const userController = (await import("./userController.js")).default;
-
         // Limpiador
         if (ticket.accepted_by) {
           const cleaner = await supabaseService.getById(
             "profiles",
             ticket.accepted_by
           );
-          const cleanerStats = cleaner.stats || {};
-          cleanerStats.tickets_cleaned =
-            (cleanerStats.tickets_cleaned || 0) + 1;
 
-          await supabaseService.update("profiles", ticket.accepted_by, {
-            stats: cleanerStats,
-          });
+          if (cleaner) {
+            const cleanerStats = cleaner.stats || {};
+            cleanerStats.tickets_cleaned =
+              (cleanerStats.tickets_cleaned || 0) + 1;
 
-          await userController.addPoints(
-            {
-              params: { id: ticket.accepted_by },
-              body: { points: points.cleaner, reason: "Cleaning completed" },
-            },
-            { json: () => {} },
-            () => {}
-          );
+            await supabaseService.update("profiles", ticket.accepted_by, {
+              stats: cleanerStats,
+              points: cleaner.points + (points.cleaner || 0),
+            });
+          }
         }
 
-        // Validador
-        const validatorStats = user.stats || {};
-        validatorStats.tickets_validated =
-          (validatorStats.tickets_validated || 0) + 1;
+        //actualizar stats del validador
+        const validator = await supabaseService.getById("profiles", userId);
+        if (validator) {
+          const validatorStats = validator.stats || {};
+          validatorStats.tickets_validated =
+            (validatorStats.tickets_validated || 0) + 1;
 
-        await supabaseService.update("profiles", userId, {
-          stats: validatorStats,
-        });
-
-        await userController.addPoints(
-          {
-            params: { id: userId },
-            body: { points: points.validator, reason: "Validation completed" },
-          },
-          { json: () => {} },
-          () => {}
-        );
+          await supabaseService.update("profiles", userId, {
+            stats: validatorStats,
+            points: validator.points + (points.validator || 0),
+          });
+        }
 
         res.json({
           success: true,
@@ -588,22 +589,68 @@ class TicketController {
           },
         });
       } else {
-        // Validación rechazada
+        //Validacion rechazada
+        //eliminar foto del despues de supabase storage
+        if (ticket.photos_after && ticket.photos_after.length > 0) {
+          try {
+            await this.deletePhotosFromStorage(ticket.photos_after);
+          } catch (deleteError) {
+            console.error("Error deleting photos: ", deleteError);
+            //No bloquear la validacion si falla el borrado
+          }
+        }
+
+        //actualizar ticket a estado rerpoted
         const updatedTicket = await supabaseService.update("tickets", id, {
-          status: "rejected",
+          status: "reported",
           validation_status: "rejected",
+          validated_by: userId,
           validated_at: new Date().toISOString(),
-          rejection_reason: rejectionReason || "Validation rejected",
+          validation_message: validation_message || "Limpieza rechazada",
+          photos_after: [],
+          accepted_by: null,
+          accepted_at: null,
+          cleaning_status: null,
         });
 
         res.json({
-          success: true,
-          message: "Validation rejected, ticket can be reattempted",
+          succes: true,
+          message: "Validacion rechazada. El ticket vuelve a estar disponible",
           data: updatedTicket,
         });
       }
     } catch (error) {
       next(error);
+    }
+  }
+
+  async deletePhotosFromStorage(photoUrls) {
+    try {
+      const filePaths = photoUrls
+        .map((url) => {
+          // Extraer el path de la URL
+          const match = url.match(/ticket-photos\/(.+)$/);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean);
+
+      if (filePaths.length === 0) return;
+
+      const { error } = await supabase.storage
+        .from("ticket-photos")
+        .remove(filePaths);
+
+      if (error) {
+        console.error("Supabase storage delete error:", error);
+        throw error;
+      }
+
+      console.log(
+        `Successfully deleted ${filePaths.length} photos from storage`
+      );
+    } catch (error) {
+      console.error("Error deleting photos from storage:", error);
+      throw error;
     }
   }
 

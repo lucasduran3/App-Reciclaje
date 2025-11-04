@@ -196,11 +196,54 @@ class TicketService {
   /**
    * Valida un ticket completado
    */
-  async validate(id, userId, approved, rejectionReason) {
-    return apiClient.request(`/tickets/${id}/validate`, {
-      method: "POST",
-      body: JSON.stringify({ userId, approved, rejectionReason }),
-    });
+  async validate(id, approved, validationMessage = "") {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      //validar datos
+      if (typeof approved !== "boolean") {
+        throw new Error("El campo 'approved' es requerido");
+      }
+
+      if (validationMessage && validationMessage.length > 200) {
+        throw new Error("El mensaje no puede exceder los 200 caracteres");
+      }
+
+      //enviar al backend
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+        }/tickets/${id}/validate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            approved,
+            validation_message: validationMessage || null,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Error al validar ticket");
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error validating ticket:", error);
+      throw error;
+    }
   }
 
   /**
