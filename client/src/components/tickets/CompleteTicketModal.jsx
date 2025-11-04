@@ -1,5 +1,6 @@
 /**
- * CompleteTicketModal - Refactored version using reusable components
+ * CompleteTicketModal - Usa ConfirmModal como base
+ * Caso intermedio: personaliza contenido pero usa botones estándar
  * client/src/components/tickets/CompleteTicketModal.jsx
  */
 
@@ -28,7 +29,7 @@ export default function CompleteTicketModal({
   const handleConfirm = async () => {
     if (!photo) {
       setError("Debes subir una foto para completar el ticket");
-      throw new Error("Foto requerida"); // Evita que el modal se cierre
+      throw new Error("Foto requerida");
     }
 
     setLoading(true);
@@ -39,26 +40,35 @@ export default function CompleteTicketModal({
       // El componente padre maneja el cierre
     } catch (err) {
       setError(err.message || "Error al completar el ticket");
-      throw err; // Re-lanzar para que ConfirmModal no cierre
+      throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!loading) {
+      setPhoto(null);
+      setCleaningStatus("complete");
+      setError("");
+      onClose();
     }
   };
 
   return (
     <ConfirmModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Completar Ticket"
-      icon={<Icon icon="fluent-color:checkmark-circle-48" width="24" />}
+      icon=""
       confirmText={loading ? "Completando..." : "Completar Ticket"}
       cancelText="Cancelar"
       onConfirm={handleConfirm}
-      variant="primary"
-      size="modal-medium"
+      confirmVariant="primary"
+      size="medium"
       loading={loading}
       disabled={!photo}
-      closeOnConfirm={false} // Manejamos el cierre manualmente
+      closeOnConfirm={false}
     >
       {/* Instrucciones */}
       <div
@@ -79,7 +89,7 @@ export default function CompleteTicketModal({
         </span>
       </div>
 
-      {/* Upload de foto usando componente reutilizable */}
+      {/* Upload de foto */}
       <div style={{ marginBottom: "var(--spacing-lg)" }}>
         <label
           style={{
@@ -90,11 +100,10 @@ export default function CompleteTicketModal({
         >
           Foto "Después" *
         </label>
-
         <PhotoUpload onPhotoChange={handlePhotoChange} error={error} />
       </div>
 
-      {/* Selector de estado de limpieza */}
+      {/* Selector de estado */}
       <div style={{ marginBottom: "var(--spacing-lg)" }}>
         <label
           style={{
@@ -105,7 +114,6 @@ export default function CompleteTicketModal({
         >
           Estado de la Limpieza *
         </label>
-
         <CompletionSelector
           value={cleaningStatus}
           onChange={setCleaningStatus}
@@ -113,7 +121,7 @@ export default function CompleteTicketModal({
         />
       </div>
 
-      {/* Error adicional (si PhotoUpload no lo muestra) */}
+      {/* Error si no hay foto */}
       {error && !photo && (
         <div
           style={{

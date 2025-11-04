@@ -61,7 +61,7 @@ export default function ValidateTicketModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Validar Limpieza"
-      icon={<Icon icon="fluent-color:shield-checkmark-48" width="24" />}
+      icon=""
       confirmText="Cerrar"
       onConfirm={handleClose}
       size="modal-medium"
