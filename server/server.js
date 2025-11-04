@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://app-reciclaje-dun.vercel.app/",
+  "https://app-reciclaje-dun.vercel.app",
   process.env.FRONTEND_URL, // Variable para producción
 ];
 
