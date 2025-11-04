@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://app-reciclaje-dun.vercel.app/",
   process.env.FRONTEND_URL, // Variable para producción
 ];
 
@@ -26,6 +27,14 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+    ],
     credentials: true,
   })
 );
