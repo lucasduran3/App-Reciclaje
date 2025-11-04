@@ -1,114 +1,118 @@
+/**
+ * ConfirmModal - Modal de confirmación genérico
+ * Usa BaseModal como primitivo
+ * client/src/components/common/ConfirmModal.jsx
+ */
+
 import React from "react";
+import BaseModal, {
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+} from "./BaseModal";
 import Button from "./Button";
 
 export default function ConfirmModal({
   isOpen,
-  onClose = () => {},
+  onClose,
+  onConfirm,
+  onCancel,
+  // Contenido
   title = "Confirmar Acción",
   message,
   subMessage,
+  children,
+  icon,
+  // Botones
   confirmText = "Confirmar",
   cancelText = "Cancelar",
-  onConfirm,
-  onCancel,
-  size = "modal-small",
-  closeOnConfirm = true,
-  variant = "secondary",
-  icon,
+  confirmVariant = "primary",
+  cancelVariant = "ghost",
+  showCancelButton = true,
+  // Comportamiento
   loading = false,
   disabled = false,
-  children,
+  closeOnConfirm = true,
+  // Estilo
+  size = "small",
+  className = "",
 }) {
-  if (!isOpen) return null;
-
-  const handleOverlayClick = () => {
-    if (loading) return; // No cerrar si está cargando
-    if (onCancel) onCancel();
-    onClose();
-  };
-
-  const handleCloseButton = () => {
-    if (loading) return;
-    if (onCancel) onCancel();
-    onClose();
-  };
-
   const handleConfirm = async () => {
-    if (typeof onConfirm === "function") {
+    if (onConfirm) {
       try {
         await onConfirm();
+        if (closeOnConfirm && !loading) {
+          onClose();
+        }
       } catch (err) {
-        console.error("onConfirm error:", err);
-        return; // No cerrar si hay error
+        console.error("ConfirmModal error:", err);
+        // No cerrar si hay error
       }
     }
+  };
 
-    if (closeOnConfirm && !loading) {
-      onClose();
-    }
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+    onClose();
   };
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className={`modal ${size}`} onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {icon && (
-              <span style={{ marginRight: "var(--spacing-sm)" }}>{icon}</span>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size={size}
+      className={className}
+      closeOnOverlayClick={!loading}
+      closeOnEscape={!loading}
+    >
+      <ModalHeader onClose={handleCancel} showCloseButton={!loading}>
+        <ModalTitle icon={icon}>{title}</ModalTitle>
+      </ModalHeader>
+
+      <ModalBody>
+        {/* Contenido por defecto */}
+        {!children && (
+          <>
+            {message && <p>{message}</p>}
+            {subMessage && (
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--text-secondary)",
+                  marginTop: "var(--spacing-md)",
+                }}
+              >
+                {subMessage}
+              </p>
             )}
-            {title}
-          </h2>
-          <button
-            className="modal-close"
-            onClick={handleCloseButton}
-            disabled={loading}
-          >
-            ×
-          </button>
-        </div>
+          </>
+        )}
 
-        <div className="modal-body">
-          {/* Contenido por defecto (mensaje + submensaje) */}
-          {!children && (
-            <>
-              {message && <p>{message}</p>}
-              {subMessage && (
-                <p
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--text-secondary)",
-                    marginTop: "var(--spacing-md)",
-                  }}
-                >
-                  {subMessage}
-                </p>
-              )}
-            </>
-          )}
+        {/* Contenido personalizado */}
+        {children}
+      </ModalBody>
 
-          {/* Contenido personalizado */}
-          {children}
-        </div>
-
-        <div className="modal-footer">
+      <ModalFooter>
+        {showCancelButton && (
           <Button
-            variant="ghost"
-            onClick={handleCloseButton}
+            variant={cancelVariant}
+            onClick={handleCancel}
             disabled={loading}
           >
             {cancelText}
           </Button>
+        )}
 
-          <Button
-            variant={variant}
-            onClick={handleConfirm}
-            loading={loading}
-            disabled={disabled || loading}
-          >
-            {confirmText}
-          </Button>
-        </div>
-      </div>
-    </div>
+        <Button
+          variant={confirmVariant}
+          onClick={handleConfirm}
+          loading={loading}
+          disabled={disabled || loading}
+        >
+          {confirmText}
+        </Button>
+      </ModalFooter>
+    </BaseModal>
   );
 }

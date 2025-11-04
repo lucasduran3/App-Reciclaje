@@ -201,6 +201,40 @@ export function useTicket(ticketId) {
     }
   };
 
+  const validateTicket = async (approved, validationMessage = "") => {
+    if (!currentUser || !ticket) {
+      throw new Error("Usuario o ticket no disponible");
+    }
+
+    // Validaciones de reglas de negocio
+    if (ticket.status !== "validating") {
+      throw new Error(
+        `Ticket no puede ser validado en estado "${ticket.status}"`
+      );
+    }
+
+    if (ticket.reported_by !== currentUser.id) {
+      throw new Error("Solo el reportante puede validar este ticket");
+    }
+
+    try {
+      const response = await ticketService.validate(
+        ticket.id,
+        approved,
+        validationMessage
+      );
+
+      // Actualizar estado local con el ticket actualizado
+      setTicket(response.data.ticket || response.data);
+
+      return response.data; // Retorna { ticket, pointsAwarded? }
+    } catch (err) {
+      setError("Error al validar ticket");
+      console.error("Error validating ticket:", err);
+      throw err;
+    }
+  };
+
   // Helpers
   const isLikedByUser =
     ticket && currentUser
@@ -234,6 +268,7 @@ export function useTicket(ticketId) {
     addComment,
     acceptTicket,
     completeTicket,
+    validateTicket,
     refresh: loadTicket,
     isLikedByUser,
     canAccept,
