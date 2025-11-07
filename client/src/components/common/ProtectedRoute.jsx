@@ -1,6 +1,5 @@
 /**
- * Protected Route - Ruta protegida que requiere autenticación
- * Ubicación: client/src/components/common/ProtectedRoute.jsx
+ * Protected Route - CORREGIDO
  */
 
 import React from "react";
@@ -9,17 +8,20 @@ import { useAuth } from "../../context/AuthContext";
 import Loader from "./Loader";
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, authLoading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  // Mostrar loader mientras verifica sesión
+  if (authLoading) {
     return <Loader fullScreen text="Verificando sesión..." />;
   }
 
+  // Redirigir a login si no autenticado
   if (!isAuthenticated) {
-    // Redirigir a login guardando la ubicación actual
+    console.log("Not authenticated, redirecting to /login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Usuario autenticado, renderizar children
   return children;
 }
