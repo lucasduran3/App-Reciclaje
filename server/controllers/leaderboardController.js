@@ -2,7 +2,7 @@
  * Leaderboard Controller - Controlador de rankings con Supabase
  */
 
-import supabaseService from '../services/supabaseService.js';
+import supabaseService from "../services/supabaseService.js";
 
 class LeaderboardController {
   /**
@@ -14,14 +14,14 @@ class LeaderboardController {
       const { zone, limit = 100 } = req.query;
 
       // Obtener usuarios con perfiles públicos, ordenados por puntos
-      let users = await supabaseService.query('profiles', (query) => {
+      let users = await supabaseService.query("profiles", (query) => {
         let q = query
-          .eq('preferences->>public_profile', 'true')
-          .order('points', { ascending: false })
+          .eq("preferences->>public_profile", "true")
+          .order("points", { ascending: false })
           .limit(parseInt(limit));
 
         if (zone) {
-          q = q.eq('zone', zone);
+          q = q.eq("zone", zone);
         }
 
         return q;
@@ -43,7 +43,7 @@ class LeaderboardController {
 
       res.json({
         success: true,
-        type: zone ? 'zone' : 'global',
+        type: zone ? "zone" : "global",
         zone: zone || null,
         count: leaderboard.length,
         data: leaderboard,
@@ -62,22 +62,22 @@ class LeaderboardController {
       const { id } = req.params;
       const { zone } = req.query;
 
-      const user = await supabaseService.getById('profiles', id);
+      const user = await supabaseService.getById("profiles", id);
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: "User not found",
         });
       }
 
       // Generar leaderboard completo
-      let users = await supabaseService.query('profiles', (query) => {
+      let users = await supabaseService.query("profiles", (query) => {
         let q = query
-          .eq('preferences->>public_profile', 'true')
-          .order('points', { ascending: false });
+          .eq("preferences->>public_profile", "true")
+          .order("points", { ascending: false });
 
         if (zone) {
-          q = q.eq('zone', zone);
+          q = q.eq("zone", zone);
         }
 
         return q;
@@ -89,7 +89,7 @@ class LeaderboardController {
       if (position === 0) {
         return res.status(404).json({
           success: false,
-          error: 'User not found in leaderboard (profile might be private)',
+          error: "User not found in leaderboard (profile might be private)",
         });
       }
 
@@ -120,10 +120,10 @@ class LeaderboardController {
   async regenerate(req, res, next) {
     try {
       // En Supabase no necesitamos regenerar, solo devolvemos el leaderboard actual
-      const users = await supabaseService.query('profiles', (query) =>
+      const users = await supabaseService.query("profiles", (query) =>
         query
-          .eq('preferences->>public_profile', 'true')
-          .order('points', { ascending: false })
+          .eq("preferences->>public_profile", "true")
+          .order("points", { ascending: false })
       );
 
       const leaderboard = users.map((user, index) => ({
@@ -141,7 +141,7 @@ class LeaderboardController {
 
       res.json({
         success: true,
-        message: 'Leaderboard data retrieved successfully',
+        message: "Leaderboard data retrieved successfully",
         count: leaderboard.length,
         data: leaderboard,
       });

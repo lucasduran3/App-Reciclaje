@@ -1,17 +1,24 @@
-/**
- * Ticket Routes - Updated with Authentication
- * server/routes/ticketRoutes.js
- */
-
 import express from "express";
 import ticketController from "../controllers/ticketController.js";
 import { requireAuth, optionalAuth } from "../middleware/auth.js";
+import {
+  createTicketValidator,
+  validateTicketValidator,
+  addCommentValidator,
+} from "../validators/ticketValidator.js";
+import validateRequest from "../middleware/validateRequest.js";
 
 const router = express.Router();
 
 // Rutas públicas (con auth opcional para likes, etc)
 router.get("/", optionalAuth, ticketController.getAll.bind(ticketController));
-router.post("/", requireAuth, ticketController.create.bind(ticketController));
+router.post(
+  "/",
+  requireAuth,
+  createTicketValidator,
+  validateRequest,
+  ticketController.create.bind(ticketController)
+);
 router.get(
   "/:id",
   optionalAuth,
@@ -38,6 +45,8 @@ router.post(
 router.post(
   "/:id/validate",
   requireAuth,
+  validateTicketValidator,
+  validateRequest,
   ticketController.validate.bind(ticketController)
 );
 router.post(
@@ -48,6 +57,8 @@ router.post(
 router.post(
   "/:id/comments",
   requireAuth,
+  addCommentValidator,
+  validateRequest,
   ticketController.addComment.bind(ticketController)
 );
 

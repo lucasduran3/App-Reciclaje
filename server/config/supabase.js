@@ -1,5 +1,4 @@
 /**
- * Supabase Configuration
  * Inicializa el cliente de Supabase para el servidor
  */
 
