@@ -7,7 +7,7 @@ import React, { use, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useAuth } from "../context/AuthContext";
-import authService from '../services/authService';
+import validatePasswordStrength from '../utils/passwordValidator';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -48,7 +48,7 @@ export default function Register() {
 
     // Validar fortaleza de contraseña
     if (name === 'password') {
-      setPasswordStrength(authService.validatePasswordStrength(value));
+      setPasswordStrength(validatePasswordStrength(value));
     }
   };
 

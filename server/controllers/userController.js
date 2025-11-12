@@ -2,9 +2,9 @@
  * User Controller - Controlador de usuarios con Supabase
  */
 
-import supabaseService from '../services/supabaseService.js';
-import { calculateLevel } from '../services/pointsService.js';
-import { updateStreak } from '../services/streakService.js';
+import supabaseService from "../services/supabaseService.js";
+import { calculateLevel } from "../services/pointsService.js";
+import { updateStreak } from "../services/streakService.js";
 
 class UserController {
   /**
@@ -13,10 +13,10 @@ class UserController {
    */
   async getAll(req, res, next) {
     try {
-      const users = await supabaseService.query('profiles', (query) => {
+      const users = await supabaseService.query("profiles", (query) => {
         return query
-          .eq('preferences->>public_profile', 'true')
-          .order('points', { ascending: false });
+          .eq("preferences->>public_profile", "true")
+          .order("points", { ascending: false });
       });
 
       res.json({
@@ -36,12 +36,12 @@ class UserController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const user = await supabaseService.getById('profiles', id);
+      const user = await supabaseService.getById("profiles", id);
 
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: "Usuario no encontrado",
         });
       }
 
@@ -63,16 +63,23 @@ class UserController {
       const { id } = req.params;
       const updates = req.body;
 
-      const user = await supabaseService.getById('profiles', id);
+      const user = await supabaseService.getById("profiles", id);
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: "Usuario no encontrado",
         });
       }
 
       // Campos que se pueden actualizar
-      const allowedUpdates = ['name', 'last_name', 'avatar_url', 'city', 'neighborhood', 'preferences'];
+      const allowedUpdates = [
+        "name",
+        "last_name",
+        "avatar_url",
+        "city",
+        "neighborhood",
+        "preferences",
+      ];
       const updateData = {};
 
       for (const key of allowedUpdates) {
@@ -83,7 +90,9 @@ class UserController {
 
       // Actualizar zona si cambian ciudad o barrio
       if (updates.city || updates.neighborhood) {
-        updateData.zone = `${updates.city || user.city} - ${updates.neighborhood || user.neighborhood}`;
+        updateData.zone = `${updates.city || user.city} - ${
+          updates.neighborhood || user.neighborhood
+        }`;
       }
 
       // Recalcular nivel si hay cambio de puntos
@@ -92,11 +101,15 @@ class UserController {
         updateData.level = calculateLevel(updates.points);
       }
 
-      const updatedUser = await supabaseService.update('profiles', id, updateData);
+      const updatedUser = await supabaseService.update(
+        "profiles",
+        id,
+        updateData
+      );
 
       res.json({
         success: true,
-        message: 'User updated successfully',
+        message: "User updated successfully",
         data: updatedUser,
       });
     } catch (error) {
@@ -113,11 +126,11 @@ class UserController {
       const { id } = req.params;
 
       // En Supabase, eliminar el perfil también eliminará el usuario de auth
-      await supabaseService.delete('profiles', id);
+      await supabaseService.delete("profiles", id);
 
       res.json({
         success: true,
-        message: 'User deleted successfully',
+        message: "User deleted successfully",
       });
     } catch (error) {
       next(error);
@@ -133,18 +146,18 @@ class UserController {
       const { id } = req.params;
       const { points, reason } = req.body;
 
-      if (typeof points !== 'number' || points <= 0) {
+      if (typeof points !== "number" || points <= 0) {
         return res.status(400).json({
           success: false,
-          error: 'Points must be a positive number',
+          error: "Points must be a positive number",
         });
       }
 
-      const user = await supabaseService.getById('profiles', id);
+      const user = await supabaseService.getById("profiles", id);
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: "User not found",
         });
       }
 
@@ -155,7 +168,7 @@ class UserController {
       // Actualizar racha
       const streakResult = updateStreak(user);
 
-      const updatedUser = await supabaseService.update('profiles', id, {
+      const updatedUser = await supabaseService.update("profiles", id, {
         points: newPoints + streakResult.pointsAwarded,
         level: newLevel,
         streak: streakResult.streak,
@@ -165,7 +178,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: 'Points added successfully',
+        message: "Points added successfully",
         data: {
           user: updatedUser,
           pointsAdded: points,
@@ -187,26 +200,26 @@ class UserController {
   async getStats(req, res, next) {
     try {
       const { id } = req.params;
-      const user = await supabaseService.getById('profiles', id);
+      const user = await supabaseService.getById("profiles", id);
 
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: "User not found",
         });
       }
 
       // Obtener tickets del usuario
-      const reportedTickets = await supabaseService.query('tickets', (query) => 
-        query.eq('reported_by', id)
+      const reportedTickets = await supabaseService.query("tickets", (query) =>
+        query.eq("reported_by", id)
       );
 
-      const acceptedTickets = await supabaseService.query('tickets', (query) => 
-        query.eq('accepted_by', id)
+      const acceptedTickets = await supabaseService.query("tickets", (query) =>
+        query.eq("accepted_by", id)
       );
 
-      const validatedTickets = await supabaseService.query('tickets', (query) => 
-        query.eq('validated_by', id)
+      const validatedTickets = await supabaseService.query("tickets", (query) =>
+        query.eq("validated_by", id)
       );
 
       res.json({
