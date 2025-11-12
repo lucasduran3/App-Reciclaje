@@ -2,6 +2,9 @@
  * Points Service - Servicio de cálculo de puntos
  */
 
+import supabaseService from "./supabaseService.js";
+import { updateStreak } from "./streakService.js";
+
 // Configuración de puntos base
 const POINTS_CONFIG = {
   REPORT: 50,
@@ -30,6 +33,49 @@ const POINTS_CONFIG = {
   },
 };
 
+const userStats = [
+  "tickets_cleaned",
+  "tickets_reported",
+  "tickets_accepted",
+  "tickets_reported",
+  "tickets_validated",
+];
+
+/**
+ * Setea las stats del usuario
+ */
+export async function updateUserPoints(userId, points, statToUpdate) {
+  if (typeof points !== "number") {
+    throw new Error("Los puntos deben ser un número");
+  }
+
+  const user = await supabaseService.getById("profiles", userId);
+  if (!user) {
+    throw new Error("Usuario no encontrado");
+  }
+
+  const newPoints = user.points + points;
+  const newLevel = calculateLevel(newPoints);
+  const newStreak = updateStreak(user);
+
+  const stats = user.stats || {};
+
+  if (statToUpdate && userStats.includes(statToUpdate)) {
+    stats[statToUpdate] = (stats[statToUpdate] || 0) + 1;
+  }
+
+  const updatedUser = await supabaseService.update("profiles", userId, {
+    points: newPoints + newStreak.pointsAwarded,
+    level: newLevel,
+    streak: newStreak.streak,
+    last_activity_date: user.last_activity_date,
+    badges: user.badges,
+    stats: stats,
+  });
+
+  return updatedUser;
+}
+
 /**
  * Calcula puntos para reportar un ticket
  */
@@ -48,11 +94,13 @@ export function calculateAcceptPoints() {
  * Calcula puntos para completar limpieza
  */
 export function calculateCleaningPoints(ticket) {
-  const basePoints = ticket.cleaningStatus === 'complete'
-    ? POINTS_CONFIG.CLEAN_COMPLETE
-    : POINTS_CONFIG.CLEAN_PARTIAL;
+  const basePoints =
+    ticket.cleaningStatus === "complete"
+      ? POINTS_CONFIG.CLEAN_COMPLETE
+      : POINTS_CONFIG.CLEAN_PARTIAL;
 
-  const priorityMult = POINTS_CONFIG.PRIORITY_MULTIPLIER[ticket.priority] || 1.0;
+  const priorityMult =
+    POINTS_CONFIG.PRIORITY_MULTIPLIER[ticket.priority] || 1.0;
   const sizeMult = POINTS_CONFIG.SIZE_MULTIPLIER[ticket.estimatedSize] || 1.0;
 
   return Math.round(basePoints * priorityMult * sizeMult);

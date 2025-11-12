@@ -1,8 +1,14 @@
 import supabaseService from "../services/supabaseService.js";
-import supabase from "../config/supabase.js";
-import { randomBytes } from "crypto";
 import { validateTicketStatusTransition } from "../services/validationService.js";
-import { calculateTicketPoints } from "../services/pointsService.js";
+import {
+  calculateAcceptPoints,
+  calculateCleaningPoints,
+  calculateTicketPoints,
+} from "../services/pointsService.js";
+import {
+  updateUserPoints,
+  calculateReportPoints,
+} from "../services/pointsService.js";
 import { validationResult } from "express-validator";
 
 class TicketController {
@@ -112,7 +118,7 @@ class TicketController {
 
       if (ticketData.photo_before.startsWith("data:")) {
         // Es base64, necesitamos subirla
-        photoUrl = await this.uploadPhotoToStorage(
+        photoUrl = await supabaseService.uploadPhotoToStorage(
           ticketData.photo_before,
           userId
         );
@@ -149,15 +155,12 @@ class TicketController {
 
       const createdTicket = await supabaseService.create("tickets", newTicket);
 
-      // Actualizar stats del usuario
-      const stats = user.stats || {};
-      stats.tickets_reported = (stats.tickets_reported || 0) + 1;
-      await supabaseService.update("profiles", userId, { stats });
-
-      // Dar puntos al reportante (50 puntos)
-      await supabaseService.update("profiles", userId, {
-        points: user.points + 50,
-      });
+      // Dar puntos al reportante
+      await updateUserPoints(
+        userId,
+        calculateReportPoints(),
+        "tickets_reported"
+      );
 
       res.status(201).json({
         success: true,
@@ -216,20 +219,11 @@ class TicketController {
         accepted_at: new Date().toISOString(),
       });
 
-      // Actualizar stats del usuario
-      const stats = user.stats || {};
-      stats.tickets_accepted = (stats.tickets_accepted || 0) + 1;
-      await supabaseService.update("profiles", userId, { stats });
-
       // Dar puntos
-      const userController = (await import("./userController.js")).default;
-      await userController.addPoints(
-        {
-          params: { id: userId },
-          body: { points: 20, reason: "Ticket aceptado" },
-        },
-        { json: () => {} },
-        () => {}
+      await updateUserPoints(
+        userId,
+        calculateAcceptPoints(),
+        "tickets_accepted"
       );
 
       res.json({
@@ -315,7 +309,10 @@ class TicketController {
       // Subir foto a Supabase Storage
       let photoUrl;
       if (photo_after.startsWith("data:")) {
-        photoUrl = await this.uploadPhotoToStorage(photo_after, userId);
+        photoUrl = await supabaseService.uploadPhotoToStorage(
+          photo_after,
+          userId
+        );
       } else if (photo_after.startsWith("http")) {
         photoUrl = photo_after;
       } else {
@@ -334,64 +331,18 @@ class TicketController {
         validation_status: "pending",
       });
 
-      // Obtener cleaner para actualizar stats y puntos
-      const cleaner = await supabaseService.getById("profiles", userId);
-      if (cleaner) {
-        // Calcular puntos según cleaning_status y prioridad
-        const basePoints = cleaning_status === "complete" ? 100 : 50;
-        const priorityMultiplier = {
-          low: 1.0,
-          medium: 1.2,
-          high: 1.5,
-          urgent: 2.0,
-        };
-        const sizeMultiplier = {
-          small: 1.0,
-          medium: 1.3,
-          large: 1.6,
-          xlarge: 2.0,
-        };
-
-        const points = Math.round(
-          basePoints *
-            (priorityMultiplier[ticket.priority] || 1.0) *
-            (sizeMultiplier[ticket.estimated_size] || 1.0)
-        );
-
-        // Actualizar stats
-        const stats = cleaner.stats || {};
-        stats.tickets_cleaned = (stats.tickets_cleaned || 0) + 1;
-
-        await supabaseService.update("profiles", userId, {
-          stats,
-          points: cleaner.points + points,
-        });
-      }
+      const updatedUser = await updateUserPoints(
+        userId,
+        calculateCleaningPoints(updatedTicket),
+        "tickets_cleaned"
+      );
 
       res.json({
         success: true,
         message: "Ticket completado exitosamente. En espera de validación",
         data: {
           ticket: updatedTicket,
-          pointsAwarded: cleaner
-            ? Math.round(
-                (cleaning_status === "complete" ? 100 : 50) *
-                  (ticket.priority === "urgent"
-                    ? 2.0
-                    : ticket.priority === "high"
-                    ? 1.5
-                    : ticket.priority === "medium"
-                    ? 1.2
-                    : 1.0) *
-                  (ticket.estimated_size === "xlarge"
-                    ? 2.0
-                    : ticket.estimated_size === "large"
-                    ? 1.6
-                    : ticket.estimated_size === "medium"
-                    ? 1.3
-                    : 1.0)
-              )
-            : 0,
+          pointsAwarded: updatedUser.points || 0,
         },
       });
     } catch (error) {
@@ -444,10 +395,10 @@ class TicketController {
         });
       }
 
+      const points = calculateTicketPoints(ticket);
+
       if (approved) {
         // Validación aprobada - completar ticket
-        const points = calculateTicketPoints(ticket);
-
         const updatedTicket = await supabaseService.update("tickets", id, {
           status: "completed",
           validated_by: userId,
@@ -460,36 +411,10 @@ class TicketController {
 
         // Actualizar stats y dar puntos a todos los participantes
         // Limpiador
-        if (ticket.accepted_by) {
-          const cleaner = await supabaseService.getById(
-            "profiles",
-            ticket.accepted_by
-          );
-
-          if (cleaner) {
-            const cleanerStats = cleaner.stats || {};
-            cleanerStats.tickets_cleaned =
-              (cleanerStats.tickets_cleaned || 0) + 1;
-
-            await supabaseService.update("profiles", ticket.accepted_by, {
-              stats: cleanerStats,
-              points: cleaner.points + (points.cleaner || 0),
-            });
-          }
-        }
+        await updateUserPoints(ticket.accepted_by, points.cleaner);
 
         //actualizar stats del validador
-        const validator = await supabaseService.getById("profiles", userId);
-        if (validator) {
-          const validatorStats = validator.stats || {};
-          validatorStats.tickets_validated =
-            (validatorStats.tickets_validated || 0) + 1;
-
-          await supabaseService.update("profiles", userId, {
-            stats: validatorStats,
-            points: validator.points + (points.validator || 0),
-          });
-        }
+        await updateUserPoints(userId, points.validator, "tickets_validated");
 
         res.json({
           success: true,
@@ -504,12 +429,18 @@ class TicketController {
         //eliminar foto del despues de supabase storage
         if (ticket.photos_after && ticket.photos_after.length > 0) {
           try {
-            await this.deletePhotosFromStorage(ticket.photos_after);
+            await supabaseService.deletePhotosFromStorage(ticket.photos_after);
           } catch (deleteError) {
             console.error("Error al eliminar fotos: ", deleteError);
             //No bloquear la validacion si falla el borrado
           }
         }
+
+        //Actualizar stats del limpiador
+        await updateUserPoints(ticket.accepted_by, -points.cleaner);
+
+        //Actualizar stats del validador
+        await updateUserPoints(userId, points.validator, "tickets_validated");
 
         //actualizar ticket a estado rerpoted
         const updatedTicket = await supabaseService.update("tickets", id, {
@@ -578,27 +509,6 @@ class TicketController {
         // Agregar like
         interactions.liked_by = [...likedBy, userId];
         interactions.likes = (interactions.likes || 0) + 1;
-
-        // Dar puntos al dueño del ticket
-        const reporter = await supabaseService.getById(
-          "profiles",
-          ticket.reported_by
-        );
-        if (reporter) {
-          const reporterStats = reporter.stats || {};
-          reporterStats.likes_received =
-            (reporterStats.likes_received || 0) + 1;
-
-          await supabaseService.update("profiles", ticket.reported_by, {
-            stats: reporterStats,
-            points: reporter.points + 5,
-          });
-        }
-
-        // Actualizar stats del usuario que dio like
-        const userStats = user.stats || {};
-        userStats.likes_given = (userStats.likes_given || 0) + 1;
-        await supabaseService.update("profiles", userId, { stats: userStats });
       }
 
       const updatedTicket = await supabaseService.update("tickets", id, {
@@ -677,14 +587,9 @@ class TicketController {
 
       await supabaseService.update("tickets", id, { interactions });
 
-      // Actualizar stats del usuario
-      const userStats = user.stats || {};
-      userStats.comments_given = (userStats.comments_given || 0) + 1;
-      await supabaseService.update("profiles", userId, { stats: userStats });
-
       res.status(201).json({
         success: true,
-        message: "Comment added successfully",
+        message: "Comentario añadido con éxito",
         data: createdComment,
       });
     } catch (error) {
@@ -755,159 +660,6 @@ class TicketController {
       });
     } catch (error) {
       next(error);
-    }
-  }
-
-  /**
-   * Helper
-   * Sube una foto a Supabase Storage
-   */
-  async uploadPhotoToStorage(base64Data, userId) {
-    try {
-      // 1. Validar formato base64
-      const matches = base64Data.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
-
-      if (!matches || matches.length !== 3) {
-        throw new Error("Formato de imagen base64 inválido");
-      }
-
-      const imageType = matches[1].toLowerCase();
-      const base64Content = matches[2];
-
-      // 2. Validar tipo de imagen
-      const validTypes = ["jpeg", "jpg", "png", "webp"];
-      if (!validTypes.includes(imageType)) {
-        throw new Error("Tipo de imagen no permitido. Usa JPG, PNG o WebP");
-      }
-
-      // 3. Convertir base64 a Buffer
-      const imageBuffer = Buffer.from(base64Content, "base64");
-
-      // 4. Validar tamaño (5MB)
-      const maxSize = 5 * 1024 * 1024;
-      if (imageBuffer.length > maxSize) {
-        throw new Error("La imagen excede el tamaño máximo de 5MB");
-      }
-
-      // 5. Generar nombre ÚNICO con hash aleatorio
-      const timestamp = Date.now();
-      const randomHash = randomBytes(8).toString("hex"); // Hash seguro
-      const normalizedType = imageType === "jpg" ? "jpeg" : imageType;
-      const fileName = `${userId}/${timestamp}-${randomHash}.${normalizedType}`;
-
-      console.log(`Uploading photo: ${fileName}`);
-
-      // 6. Verificar que el bucket existe
-      const { data: buckets, error: bucketError } =
-        await supabase.storage.listBuckets();
-
-      if (bucketError) {
-        console.error("Error listing buckets:", bucketError);
-        throw new Error("Error verificando bucket de almacenamiento");
-      }
-
-      const bucketExists = buckets?.some((b) => b.name === "ticket-photos");
-
-      if (!bucketExists) {
-        console.error('Bucket "ticket-photos" no existe en Supabase Storage');
-        throw new Error('Bucket "ticket-photos" no encontrado. ');
-      }
-
-      // 7. Subir archivo a Supabase Storage
-      const { data, error } = await supabase.storage
-        .from("ticket-photos")
-        .upload(fileName, imageBuffer, {
-          contentType: `image/${normalizedType}`,
-          cacheControl: "3600",
-          upsert: false, // IMPORTANTE: No sobrescribir si existe
-        });
-
-      if (error) {
-        console.error("Supabase upload error:", error);
-
-        // Manejar error de archivo duplicado
-        if (error.message?.includes("already exists")) {
-          // Reintentar con nuevo nombre
-          const retryFileName = `${userId}/${timestamp}-${randomBytes(
-            8
-          ).toString("hex")}.${normalizedType}`;
-          console.log(`Retry with: ${retryFileName}`);
-
-          const { data: retryData, error: retryError } = await supabase.storage
-            .from("ticket-photos")
-            .upload(retryFileName, imageBuffer, {
-              contentType: `image/${normalizedType}`,
-              cacheControl: "3600",
-              upsert: false,
-            });
-
-          if (retryError) {
-            throw new Error(
-              `Error al subir imagen (retry): ${retryError.message}`
-            );
-          }
-
-          // Obtener URL pública del retry
-          const { data: retryUrlData } = supabase.storage
-            .from("ticket-photos")
-            .getPublicUrl(retryFileName);
-
-          console.log(`Photo uploaded (retry): ${retryUrlData.publicUrl}`);
-          return retryUrlData.publicUrl;
-        }
-
-        throw new Error(`Error al subir imagen: ${error.message}`);
-      }
-
-      // 8. Obtener URL pública
-      const { data: urlData } = supabase.storage
-        .from("ticket-photos")
-        .getPublicUrl(fileName);
-
-      if (!urlData?.publicUrl) {
-        throw new Error("No se pudo obtener URL pública de la imagen");
-      }
-
-      console.log(`Photo uploaded successfully: ${urlData.publicUrl}`);
-
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error("Error in uploadPhotoToStorage:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Helper
-   * Elimina fotos de supabase storage
-   */
-  async deletePhotosFromStorage(photoUrls) {
-    try {
-      const filePaths = photoUrls
-        .map((url) => {
-          // Extraer el path de la URL
-          const match = url.match(/ticket-photos\/(.+)$/);
-          return match ? match[1] : null;
-        })
-        .filter(Boolean);
-
-      if (filePaths.length === 0) return;
-
-      const { error } = await supabase.storage
-        .from("ticket-photos")
-        .remove(filePaths);
-
-      if (error) {
-        console.error("Supabase storage delete error:", error);
-        throw error;
-      }
-
-      console.log(
-        `Successfully deleted ${filePaths.length} photos from storage`
-      );
-    } catch (error) {
-      console.error("Error deleting photos from storage:", error);
-      throw error;
     }
   }
 }
