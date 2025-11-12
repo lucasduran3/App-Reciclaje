@@ -1,15 +1,9 @@
-/**
- * Ticket Controller - Controlador de tickets con Supabase (Parte 1)
- */
-
 import supabaseService from "../services/supabaseService.js";
 import supabase from "../config/supabase.js";
 import { randomBytes } from "crypto";
-import {
-  validateTicket,
-  validateTicketStatusTransition,
-} from "../services/validationService.js";
+import { validateTicketStatusTransition } from "../services/validationService.js";
 import { calculateTicketPoints } from "../services/pointsService.js";
+import { validationResult } from "express-validator";
 
 class TicketController {
   /**
@@ -83,52 +77,68 @@ class TicketController {
 
   /**
    * POST /api/tickets
-   * Crea un nuevo ticket (reportar)
+   * Crea un nuevo ticket con upload de imagen a Supabase Storage
    */
   async create(req, res, next) {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      // Obtener userId del token (implementar middleware de auth)
+      const userId = req.user?.id || req.body.reported_by;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Usuario no autenticado",
+        });
+      }
+
       const ticketData = req.body;
 
-      // Validar datos básicos
-      if (!ticketData.title || ticketData.title.length < 10) {
-        return res.status(400).json({
-          success: false,
-          error: "Title must be at least 10 characters",
-        });
-      }
-
-      if (!ticketData.description || ticketData.description.length < 20) {
-        return res.status(400).json({
-          success: false,
-          error: "Description must be at least 20 characters",
-        });
-      }
-
       // Verificar que el usuario existe
-      const user = await supabaseService.getById(
-        "profiles",
-        ticketData.reported_by
-      );
+      const user = await supabaseService.getById("profiles", userId);
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "Reporter user not found",
+          error: "Usuario no encontrado",
         });
       }
 
-      // Crear ticket
+      // Subir foto a Supabase Storage
+      let photoUrl;
+
+      if (ticketData.photo_before.startsWith("data:")) {
+        // Es base64, necesitamos subirla
+        photoUrl = await this.uploadPhotoToStorage(
+          ticketData.photo_before,
+          userId
+        );
+      } else if (ticketData.photo_before.startsWith("http")) {
+        // Ya es una URL (foto ya subida)
+        photoUrl = ticketData.photo_before;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "Formato de foto inválido",
+        });
+      }
+
+      // Crear ticket en la base de datos
       const newTicket = {
-        title: ticketData.title,
-        description: ticketData.description,
-        location: `(${ticketData.location.lat},${ticketData.location.lng})`, // PostGIS point format
-        address: ticketData.address,
+        title: ticketData.title.trim(),
+        description: ticketData.description.trim(),
+        location: `(${ticketData.location.lat},${ticketData.location.lng})`, // PostGIS point
+        address: ticketData.address.trim(),
         zone: ticketData.zone,
         type: ticketData.type,
-        priority: ticketData.priority || "medium",
-        estimated_size: ticketData.estimated_size || "medium",
+        priority: ticketData.priority,
+        estimated_size: ticketData.estimated_size,
         status: "reported",
-        reported_by: ticketData.reported_by,
-        photos_before: ticketData.photos_before,
+        reported_by: userId,
+        photos_before: [photoUrl], // Array de URLs
         interactions: {
           likes: 0,
           comments: 0,
@@ -142,92 +152,20 @@ class TicketController {
       // Actualizar stats del usuario
       const stats = user.stats || {};
       stats.tickets_reported = (stats.tickets_reported || 0) + 1;
+      await supabaseService.update("profiles", userId, { stats });
 
-      await supabaseService.update("profiles", user.id, { stats });
-
-      // Dar puntos al reportante
-      const userController = (await import("./userController.js")).default;
-      await userController.addPoints(
-        {
-          params: { id: user.id },
-          body: { points: 50, reason: "Ticket reported" },
-        },
-        { json: () => {} },
-        () => {}
-      );
+      // Dar puntos al reportante (50 puntos)
+      await supabaseService.update("profiles", userId, {
+        points: user.points + 50,
+      });
 
       res.status(201).json({
         success: true,
-        message: "Ticket created successfully",
+        message: "Ticket creado exitosamente",
         data: createdTicket,
       });
     } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PUT /api/tickets/:id
-   * Actualiza un ticket
-   */
-  async update(req, res, next) {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-
-      const ticket = await supabaseService.getById("tickets", id);
-      if (!ticket) {
-        return res.status(404).json({
-          success: false,
-          error: "Ticket not found",
-        });
-      }
-
-      // Validar transición de estado si se actualiza
-      if (updates.status && updates.status !== ticket.status) {
-        const statusValidation = validateTicketStatusTransition(
-          ticket.status,
-          updates.status
-        );
-        if (!statusValidation.valid) {
-          return res.status(400).json({
-            success: false,
-            error: statusValidation.error,
-          });
-        }
-      }
-
-      const updatedTicket = await supabaseService.update(
-        "tickets",
-        id,
-        updates
-      );
-
-      res.json({
-        success: true,
-        message: "Ticket updated successfully",
-        data: updatedTicket,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * DELETE /api/tickets/:id
-   * Elimina un ticket
-   */
-  async delete(req, res, next) {
-    try {
-      const { id } = req.params;
-
-      await supabaseService.delete("tickets", id);
-
-      res.json({
-        success: true,
-        message: "Ticket deleted successfully",
-      });
-    } catch (error) {
+      console.error("Error creating ticket:", error);
       next(error);
     }
   }
@@ -236,7 +174,6 @@ class TicketController {
    * POST /api/tickets/:id/accept
    * Acepta un ticket para limpiar
    */
-
   async accept(req, res, next) {
     try {
       const { id } = req.params;
@@ -246,21 +183,21 @@ class TicketController {
       if (!ticket) {
         return res.status(404).json({
           success: false,
-          error: "Ticket not found",
+          error: "Ticket no encontrado",
         });
       }
 
       if (ticket.status !== "reported") {
         return res.status(400).json({
           success: false,
-          error: "Ticket is not available to accept",
+          error: "El ticket no se puede aceptar",
         });
       }
 
       if (ticket.reported_by === userId) {
         return res.status(400).json({
           success: false,
-          error: "Cannot accept your own ticket",
+          error: "No puedes aceptar tu propio ticket",
         });
       }
 
@@ -268,7 +205,7 @@ class TicketController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 
@@ -289,7 +226,7 @@ class TicketController {
       await userController.addPoints(
         {
           params: { id: userId },
-          body: { points: 20, reason: "Ticket accepted" },
+          body: { points: 20, reason: "Ticket aceptado" },
         },
         { json: () => {} },
         () => {}
@@ -297,7 +234,7 @@ class TicketController {
 
       res.json({
         success: true,
-        message: "Ticket accepted successfully",
+        message: "Ticket aceptado con éxito",
         data: updatedTicket,
       });
     } catch (error) {
@@ -377,24 +314,14 @@ class TicketController {
 
       // Subir foto a Supabase Storage
       let photoUrl;
-      try {
-        if (photo_after.startsWith("data:")) {
-          // Es base64, subirla
-          photoUrl = await this.uploadPhotoToStorage(photo_after, userId);
-        } else if (photo_after.startsWith("http")) {
-          // Ya es una URL
-          photoUrl = photo_after;
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: "Formato de foto inválido",
-          });
-        }
-      } catch (uploadError) {
-        console.error("Error uploading photo:", uploadError);
-        return res.status(500).json({
+      if (photo_after.startsWith("data:")) {
+        photoUrl = await this.uploadPhotoToStorage(photo_after, userId);
+      } else if (photo_after.startsWith("http")) {
+        photoUrl = photo_after;
+      } else {
+        return res.status(400).json({
           success: false,
-          error: `Error al subir foto: ${uploadError.message}`,
+          error: "Formato de foto inválido",
         });
       }
 
@@ -439,11 +366,6 @@ class TicketController {
           stats,
           points: cleaner.points + points,
         });
-
-        // Log de puntos otorgados
-        console.log(
-          `Cleaner ${userId} awarded ${points} points for completing ticket ${id}`
-        );
       }
 
       res.json({
@@ -473,7 +395,6 @@ class TicketController {
         },
       });
     } catch (error) {
-      console.error("Error completing ticket:", error);
       next(error);
     }
   }
@@ -484,6 +405,11 @@ class TicketController {
    */
   async validate(req, res, next) {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
       const { id } = req.params;
       const { approved, validation_message } = req.body;
       const userId = req.user?.id;
@@ -495,30 +421,15 @@ class TicketController {
         });
       }
 
-      //validaciones básicas
-      if (typeof approved !== "boolean") {
-        return res.status(400).json({
-          success: false,
-          error: "El campo 'approved' es requerido y debe ser booleano",
-        });
-      }
-
-      //validar mensaje de validacion
-      if (validation_message && validation_message.length > 200) {
-        return res.status(400).json({
-          succes: false,
-          error: "El mensaje de validacion no puede exceder los 200 caracteres",
-        });
-      }
-
       const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
-          error: "Ticket not found",
+          error: "Ticket no encontrado",
         });
       }
 
+      // Validaciones de estado de ticket
       if (ticket.reported_by !== userId) {
         return res.status(403).json({
           succes: false,
@@ -529,7 +440,7 @@ class TicketController {
       if (ticket.status !== "validating") {
         return res.status(400).json({
           success: false,
-          error: "Ticket is not waiting for validation",
+          error: "El ticket no esta esperando validación",
         });
       }
 
@@ -582,7 +493,7 @@ class TicketController {
 
         res.json({
           success: true,
-          message: "Ticket validated and completed successfully",
+          message: "Ticket validado y completado con éxito",
           data: {
             ticket: updatedTicket,
             pointsAwarded: points,
@@ -595,7 +506,7 @@ class TicketController {
           try {
             await this.deletePhotosFromStorage(ticket.photos_after);
           } catch (deleteError) {
-            console.error("Error deleting photos: ", deleteError);
+            console.error("Error al eliminar fotos: ", deleteError);
             //No bloquear la validacion si falla el borrado
           }
         }
@@ -624,36 +535,6 @@ class TicketController {
     }
   }
 
-  async deletePhotosFromStorage(photoUrls) {
-    try {
-      const filePaths = photoUrls
-        .map((url) => {
-          // Extraer el path de la URL
-          const match = url.match(/ticket-photos\/(.+)$/);
-          return match ? match[1] : null;
-        })
-        .filter(Boolean);
-
-      if (filePaths.length === 0) return;
-
-      const { error } = await supabase.storage
-        .from("ticket-photos")
-        .remove(filePaths);
-
-      if (error) {
-        console.error("Supabase storage delete error:", error);
-        throw error;
-      }
-
-      console.log(
-        `Successfully deleted ${filePaths.length} photos from storage`
-      );
-    } catch (error) {
-      console.error("Error deleting photos from storage:", error);
-      throw error;
-    }
-  }
-
   /**
    * POST /api/tickets/:id/like
    * Da like a un ticket
@@ -667,7 +548,7 @@ class TicketController {
       if (!ticket) {
         return res.status(404).json({
           success: false,
-          error: "Ticket not found",
+          error: "Ticket no encontrado",
         });
       }
 
@@ -675,7 +556,7 @@ class TicketController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 
@@ -742,28 +623,19 @@ class TicketController {
    */
   async addComment(req, res, next) {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
       const { id } = req.params;
       const { userId, text } = req.body;
-
-      if (!text || typeof text !== "string" || text.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: "Comment text is required and cannot be empty",
-        });
-      }
-
-      if (text.trim().length > 500) {
-        return res.status(400).json({
-          success: false,
-          error: "Comment text cannot exceed 500 characters",
-        });
-      }
 
       const ticket = await supabaseService.getById("tickets", id);
       if (!ticket) {
         return res.status(404).json({
           success: false,
-          error: "Ticket not found",
+          error: "Ticket no encontrado",
         });
       }
 
@@ -771,7 +643,7 @@ class TicketController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 
@@ -821,201 +693,74 @@ class TicketController {
   }
 
   /**
-   * POST /api/tickets
-   * Crea un nuevo ticket con upload de imagen a Supabase Storage
+   * PUT /api/tickets/:id
+   * Actualiza un ticket
    */
-  async create(req, res, next) {
+  async update(req, res, next) {
     try {
-      // Obtener userId del token (implementar middleware de auth)
-      const userId = req.user?.id || req.body.reported_by;
+      const { id } = req.params;
+      const updates = req.body;
 
-      if (!userId) {
-        return res.status(401).json({
+      const ticket = await supabaseService.getById("tickets", id);
+      if (!ticket) {
+        return res.status(404).json({
           success: false,
-          error: "Usuario no autenticado",
+          error: "Ticket no encontrado",
         });
       }
 
-      const ticketData = req.body;
-
-      // Validaciones básicas
-      const validationErrors = [];
-
-      // Title
-      if (
-        !ticketData.title ||
-        ticketData.title.length < 5 ||
-        ticketData.title.length > 120
-      ) {
-        validationErrors.push("El título debe tener entre 5 y 120 caracteres");
-      }
-
-      // Description
-      if (
-        !ticketData.description ||
-        ticketData.description.length < 20 ||
-        ticketData.description.length > 2000
-      ) {
-        validationErrors.push(
-          "La descripción debe tener entre 10 y 2000 caracteres"
+      // Validar transición de estado si se actualiza
+      if (updates.status && updates.status !== ticket.status) {
+        const statusValidation = validateTicketStatusTransition(
+          ticket.status,
+          updates.status
         );
-      }
-
-      // Zone
-      const validZones = ["Centro", "Norte", "Sur", "Este", "Oeste"];
-      if (!ticketData.zone || !validZones.includes(ticketData.zone)) {
-        validationErrors.push("Zona inválida");
-      }
-
-      // Type
-      const validTypes = [
-        "general",
-        "recyclable",
-        "organic",
-        "electronic",
-        "hazardous",
-        "bulky",
-      ];
-      if (!ticketData.type || !validTypes.includes(ticketData.type)) {
-        validationErrors.push("Tipo de residuo inválido");
-      }
-
-      // Priority
-      const validPriorities = ["low", "medium", "high", "urgent"];
-      if (
-        !ticketData.priority ||
-        !validPriorities.includes(ticketData.priority)
-      ) {
-        validationErrors.push("Prioridad inválida");
-      }
-
-      // Estimated Size
-      const validSizes = ["small", "medium", "large", "xlarge"];
-      if (
-        !ticketData.estimated_size ||
-        !validSizes.includes(ticketData.estimated_size)
-      ) {
-        validationErrors.push("Tamaño estimado inválido");
-      }
-
-      // Location
-      if (
-        !ticketData.location ||
-        !ticketData.location.lat ||
-        !ticketData.location.lng
-      ) {
-        validationErrors.push("Ubicación es requerida (coordenadas)");
-      } else {
-        const lat = parseFloat(ticketData.location.lat);
-        const lng = parseFloat(ticketData.location.lng);
-
-        if (
-          isNaN(lat) ||
-          isNaN(lng) ||
-          lat < -90 ||
-          lat > 90 ||
-          lng < -180 ||
-          lng > 180
-        ) {
-          validationErrors.push("Coordenadas inválidas");
+        if (!statusValidation.valid) {
+          return res.status(400).json({
+            success: false,
+            error: statusValidation.error,
+          });
         }
       }
 
-      // Address
-      if (!ticketData.address || ticketData.address.trim().length < 5) {
-        validationErrors.push("Dirección es requerida (mínimo 5 caracteres)");
-      }
+      const updatedTicket = await supabaseService.update(
+        "tickets",
+        id,
+        updates
+      );
 
-      // Photo validation (debe venir como base64 o URL ya subida)
-      if (!ticketData.photo_before) {
-        validationErrors.push('Foto "antes" es requerida');
-      }
-
-      // Si hay errores, retornar
-      if (validationErrors.length > 0) {
-        return res.status(400).json({
-          success: false,
-          errors: validationErrors,
-        });
-      }
-
-      // Verificar que el usuario existe
-      const user = await supabaseService.getById("profiles", userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: "Usuario no encontrado",
-        });
-      }
-
-      // Subir foto a Supabase Storage
-      let photoUrl;
-
-      if (ticketData.photo_before.startsWith("data:")) {
-        // Es base64, necesitamos subirla
-        photoUrl = await this.uploadPhotoToStorage(
-          ticketData.photo_before,
-          userId
-        );
-      } else if (ticketData.photo_before.startsWith("http")) {
-        // Ya es una URL (foto ya subida)
-        photoUrl = ticketData.photo_before;
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: "Formato de foto inválido",
-        });
-      }
-
-      // Crear ticket en la base de datos
-      const newTicket = {
-        title: ticketData.title.trim(),
-        description: ticketData.description.trim(),
-        location: `(${ticketData.location.lat},${ticketData.location.lng})`, // PostGIS point
-        address: ticketData.address.trim(),
-        zone: ticketData.zone,
-        type: ticketData.type,
-        priority: ticketData.priority,
-        estimated_size: ticketData.estimated_size,
-        status: "reported",
-        reported_by: userId,
-        photos_before: [photoUrl], // Array de URLs
-        interactions: {
-          likes: 0,
-          comments: 0,
-          views: 0,
-          liked_by: [],
-        },
-      };
-
-      const createdTicket = await supabaseService.create("tickets", newTicket);
-
-      // Actualizar stats del usuario
-      const stats = user.stats || {};
-      stats.tickets_reported = (stats.tickets_reported || 0) + 1;
-      await supabaseService.update("profiles", userId, { stats });
-
-      // Dar puntos al reportante (50 puntos)
-      await supabaseService.update("profiles", userId, {
-        points: user.points + 50,
-      });
-
-      res.status(201).json({
+      res.json({
         success: true,
-        message: "Ticket creado exitosamente",
-        data: createdTicket,
+        message: "Ticket actualizado con éxito",
+        data: updatedTicket,
       });
     } catch (error) {
-      console.error("Error creating ticket:", error);
       next(error);
     }
   }
 
   /**
+   * DELETE /api/tickets/:id
+   * Elimina un ticket
+   */
+  async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      await supabaseService.delete("tickets", id);
+
+      res.json({
+        success: true,
+        message: "Ticket eliminado con éxito",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Helper
    * Sube una foto a Supabase Storage
-   * @param {string} base64Data - Imagen en base64
-   * @param {string} userId - ID del usuario
-   * @returns {Promise<string>} URL pública de la imagen
    */
   async uploadPhotoToStorage(base64Data, userId) {
     try {
@@ -1065,11 +810,7 @@ class TicketController {
 
       if (!bucketExists) {
         console.error('Bucket "ticket-photos" no existe en Supabase Storage');
-        throw new Error(
-          'Bucket "ticket-photos" no encontrado. ' +
-            "Por favor, créalo en Supabase Dashboard -> Storage -> New Bucket " +
-            'con nombre "ticket-photos" y marca "Public bucket"'
-        );
+        throw new Error('Bucket "ticket-photos" no encontrado. ');
       }
 
       // 7. Subir archivo a Supabase Storage
@@ -1132,6 +873,40 @@ class TicketController {
       return urlData.publicUrl;
     } catch (error) {
       console.error("Error in uploadPhotoToStorage:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper
+   * Elimina fotos de supabase storage
+   */
+  async deletePhotosFromStorage(photoUrls) {
+    try {
+      const filePaths = photoUrls
+        .map((url) => {
+          // Extraer el path de la URL
+          const match = url.match(/ticket-photos\/(.+)$/);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean);
+
+      if (filePaths.length === 0) return;
+
+      const { error } = await supabase.storage
+        .from("ticket-photos")
+        .remove(filePaths);
+
+      if (error) {
+        console.error("Supabase storage delete error:", error);
+        throw error;
+      }
+
+      console.log(
+        `Successfully deleted ${filePaths.length} photos from storage`
+      );
+    } catch (error) {
+      console.error("Error deleting photos from storage:", error);
       throw error;
     }
   }
