@@ -109,7 +109,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: "User updated successfully",
+        message: "Usuario actualizado con exito",
         data: updatedUser,
       });
     } catch (error) {
@@ -130,7 +130,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: "User deleted successfully",
+        message: "Usuario eliminado con exito",
       });
     } catch (error) {
       next(error);
@@ -149,7 +149,7 @@ class UserController {
       if (typeof points !== "number" || points <= 0) {
         return res.status(400).json({
           success: false,
-          error: "Points must be a positive number",
+          error: "Los puntos deben ser un numero positivo",
         });
       }
 
@@ -157,7 +157,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 
@@ -178,7 +178,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: "Points added successfully",
+        message: "Puntos añadidos con exito",
         data: {
           user: updatedUser,
           pointsAdded: points,
@@ -205,7 +205,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 

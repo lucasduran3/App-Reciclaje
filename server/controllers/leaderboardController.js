@@ -66,7 +66,7 @@ class LeaderboardController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: "User not found",
+          error: "Usuario no encontrado",
         });
       }
 
@@ -89,7 +89,7 @@ class LeaderboardController {
       if (position === 0) {
         return res.status(404).json({
           success: false,
-          error: "User not found in leaderboard (profile might be private)",
+          error: "Usuario no encontrado en leaderboard (perfil puede ser privado)",
         });
       }
 
